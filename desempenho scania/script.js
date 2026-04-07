@@ -31,7 +31,6 @@
     }
     function formatNumber(value, digits = 1) { return Number(value || 0).toLocaleString('pt-BR', { minimumFractionDigits: digits, maximumFractionDigits: digits }); }
     function formatInt(value) { return Number(value || 0).toLocaleString('pt-BR', { maximumFractionDigits: 0 }); }
-    function formatMoney(value) { return Number(value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }); }
     function gradeFromScore(score) { if (score >= 90) return 'A'; if (score >= 80) return 'B'; if (score >= 70) return 'C'; if (score >= 60) return 'D'; return 'E'; }
     function gradeClass(letter) { return `grade-${String(letter||'e').toLowerCase()}`; }
     function pillColor(letter) { return ({ A:'#16a34a', B:'#65a30d', C:'#ca8a04', D:'#ea580c', E:'#dc2626' })[letter] || '#64748b'; }
@@ -106,10 +105,6 @@
     function computeMonthSummary(rows) {
       const validMetaRows = rows.filter(r => r.meta > 0);
       const metaHitRows = validMetaRows.filter(r => r.consumo >= r.meta);
-      const totalLiters = rows.reduce((acc, r) => {
-        if (!r.consumo || !r.distancia) return acc;
-        return acc + (r.distancia / r.consumo);
-      }, 0);
       const savingsLiters = validMetaRows.reduce((acc, r) => {
         if (!r.consumo || !r.meta || r.consumo >= r.meta) return acc;
         const atual = r.distancia > 0 ? r.distancia / r.consumo : 0;
@@ -117,29 +112,12 @@
         return acc + Math.max(0, atual - alvo);
       }, 0);
       const criticalRows = rows.filter(r => r.score < 55 || (r.meta > 0 && r.consumo < r.meta));
-      const byDriver = new Map();
-      rows.forEach(r => {
-        if (!byDriver.has(r.motorista)) byDriver.set(r.motorista, []);
-        byDriver.get(r.motorista).push(r);
-      });
-      let driversBelowMeta = 0;
-      byDriver.forEach(items => {
-        const ds = computeDriverMiniSummary(items);
-        if (ds.metaMedia > 0 && ds.consumoMedio < ds.metaMedia) driversBelowMeta += 1;
-      });
-      const gradeDist = { A: 0, B: 0, C: 0, D: 0, E: 0 };
-      rows.forEach(r => { gradeDist[r.grade] = (gradeDist[r.grade] || 0) + 1; });
-      const co2Total = sum(rows, 'co2');
-      const totalKm = sum(rows, 'distancia');
       return {
         frota: rows.length,
         consumoMedio: avg(rows, 'consumo'),
         distanciaMedia: avg(rows, 'distancia'),
-        totalKm,
-        co2Total,
-        totalLiters,
-        idleLiters: totalLiters * (avg(rows, 'marchaLenta') / 100),
-        treesEquivalent: co2Total * 6,
+        totalKm: sum(rows, 'distancia'),
+        co2Total: sum(rows, 'co2'),
         scoreMedio: avg(rows, 'score'),
         metaMedia: avg(validMetaRows, 'meta'),
         metaHitPct: validMetaRows.length ? (metaHitRows.length / validMetaRows.length) * 100 : 0,
@@ -149,23 +127,9 @@
         savingsValue: savingsLiters * 6,
         criticalCount: criticalRows.length,
         criticalPct: rows.length ? (criticalRows.length / rows.length) * 100 : 0,
-        driversBelowMeta,
         grade: gradeFromScore(avg(rows, 'score')),
-        gradeDist,
         marchaLenta: avg(rows, 'marchaLenta'),
         inercia: avg(rows, 'inercia'),
-        excessoVelocidade: avg(rows, 'excessoVelocidade'),
-        freadasBruscas: avg(rows, 'freadasBruscas')
-      };
-    }
-
-    function computeDriverMiniSummary(rows) {
-      const validMetaRows = rows.filter(r => r.meta > 0);
-      return {
-        consumoMedio: avg(rows, 'consumo'),
-        scoreMedio: avg(rows, 'score'),
-        metaMedia: avg(validMetaRows, 'meta'),
-        marchaLenta: avg(rows, 'marchaLenta'),
         excessoVelocidade: avg(rows, 'excessoVelocidade'),
         freadasBruscas: avg(rows, 'freadasBruscas')
       };
@@ -188,10 +152,6 @@
         text: current.savingsLiters > 0
           ? `Potencial estimado de economia de ${formatInt(current.savingsLiters)} litros no período (≈ R$ ${formatMoney(current.savingsValue)}).`
           : 'No filtro atual, a frota está alinhada com a meta de consumo e sem potencial relevante de economia.'
-      });
-      items.push({
-        icon: '⏳',
-        text: `Consumo estimado em marcha lenta: ${formatInt(current.idleLiters)} litros. CO₂ equivalente a aproximadamente ${formatInt(current.treesEquivalent)} árvores.`
       });
       if (prevMonth && previous.frota > 0) {
         const scoreDiff = current.scoreMedio - previous.scoreMedio;
@@ -305,15 +265,9 @@
       document.getElementById('savingsValueFoot').textContent = `Estimativa financeira: R$ ${formatMoney(s.savingsValue)}`;
       document.getElementById('criticalCount').textContent = formatInt(s.criticalCount);
       document.getElementById('criticalPct').textContent = `${formatNumber(s.criticalPct,1)}% da frota`;
-      document.getElementById('idleLiters').textContent = formatInt(s.idleLiters);
-      document.getElementById('treesEquivalent').textContent = formatInt(s.treesEquivalent);
-      document.getElementById('driversBelowMeta').textContent = formatInt(s.driversBelowMeta);
       setDelta('deltaMetaHit', s.metaHitPct, p.metaHitPct, true, ' p.p.', 1);
       setDelta('deltaSavings', s.savingsLiters, p.savingsLiters, false, ' l', 0);
       setDelta('deltaCritical', s.criticalCount, p.criticalCount, false, '', 0);
-      setDelta('deltaIdleLiters', s.idleLiters, p.idleLiters, false, ' l', 0);
-      setDelta('deltaTrees', s.treesEquivalent, p.treesEquivalent, false, '', 0);
-      setDelta('deltaDriversBelowMeta', s.driversBelowMeta, p.driversBelowMeta, false, '', 0);
       renderComparePanel(month, s, p, prevMonth);
       renderInsightsPanel(s, p, prevMonth);
     }
@@ -325,11 +279,10 @@
       const stats = [
         ['Consumo médio', current.consumoMedio, previous.consumoMedio, true, ' km/l', 2],
         ['Score médio', current.scoreMedio, previous.scoreMedio, true, ' pts', 1],
-        ['Km total rodado', current.totalKm, previous.totalKm, true, ' km', 0],
         ['Marcha lenta', current.marchaLenta, previous.marchaLenta, false, ' p.p.', 1],
         ['Excesso de velocidade', current.excessoVelocidade, previous.excessoVelocidade, false, ' p.p.', 1],
+        ['Km total rodado', current.totalKm, previous.totalKm, true, ' km', 0],
         ['CO₂ total', current.co2Total, previous.co2Total, false, ' t', 1],
-        ['Marcha lenta (L)', current.idleLiters, previous.idleLiters, false, ' l', 0],
       ];
       target.innerHTML = stats.map(([label, a, b, better, unit, digits]) => {
         const d = deltaInfo(a, b, better, unit, digits);
@@ -408,6 +361,26 @@
       document.getElementById('worstRankingSubtitle').textContent = `Frota completa de ${month} • foco para ação imediata`;
     }
 
+    function renderGradeDistribution(month) {
+      const rows = state.monthData[month] || [];
+      const counts = ['A','B','C','D','E'].map(g => rows.filter(r => r.grade === g).length);
+      if (state.charts.gradeDist) state.charts.gradeDist.destroy();
+      state.charts.gradeDist = new ApexCharts(document.querySelector('#chartGradeDist'), {
+        chart: { type: 'bar', height: 250, toolbar: { show: false } },
+        series: [{ name: 'Equipamentos', data: counts }],
+        xaxis: { categories: ['A','B','C','D','E'] },
+        colors: ['#22c55e','#84cc16','#eab308','#f97316','#ef4444'],
+        plotOptions: { bar: { borderRadius: 10, distributed: true, columnWidth: '52%' } },
+        dataLabels: { enabled: true },
+        legend: { show: false },
+        grid: { borderColor: '#e5e7eb' },
+        yaxis: { title: { text: 'Quantidade' } }
+      });
+      state.charts.gradeDist.render();
+      const subtitle = document.getElementById('gradeDistSubtitle');
+      if (subtitle) subtitle.textContent = `Frota completa de ${month}`;
+    }
+
     function computeTrainingList(month) {
       const rows = state.monthData[month] || [];
       const byDriver = new Map();
@@ -453,10 +426,54 @@
         map.get(r.motorista).push(r);
       });
       return Array.from(map.entries()).map(([motorista, items]) => {
-        const ds = computeDriverMiniSummary(items);
-        const health = (ds.scoreMedio * 0.6) + ((ds.metaMedia ? (ds.consumoMedio / ds.metaMedia) * 100 : ds.consumoMedio * 20) * 0.4);
-        return { motorista, score: ds.scoreMedio, consumo: ds.consumoMedio, meta: ds.metaMedia, health };
+        const s = computeMonthSummary(items);
+        const health = (s.scoreMedio * 0.6) + ((s.metaMedia ? (s.consumoMedio / s.metaMedia) * 100 : s.consumoMedio * 20) * 0.4);
+        return { motorista, score: s.scoreMedio, consumo: s.consumoMedio, meta: s.metaMedia, health };
       }).sort((a,b) => b.health - a.health);
+    }
+
+    function renderDriverSummaryTargets(month, targets) {
+      const rows = getFilteredRows(month);
+      if (state.selectedDriver === 'TODOS') {
+        const ranking = computeDriverRanking(month);
+        const titleText = 'Visão executiva de condutores';
+        const emptyHtml = '<div class="empty">Sem dados de motoristas para este período.</div>';
+        const best = ranking.slice(0,5);
+        const worst = ranking.slice(-5).reverse();
+        const html = ranking.length ? `
+          <div class="summary-panel">
+            <div class="summary-box tall"><div class="subtle">Top motoristas do mês</div><div class="list">${best.map(r => `<div class="list-item"><div><strong>${r.motorista}</strong><span class="list-sub">Score ${formatNumber(r.score,1)} • Consumo ${formatNumber(r.consumo,2)} km/l${r.meta ? ` • Meta ${formatNumber(r.meta,2)}` : ''}</span></div><span class="training-level lvl-low">destaque</span></div>`).join('')}</div></div>
+            <div class="summary-box tall"><div class="subtle">Condutores para ação imediata</div><div class="list">${worst.map(r => `<div class="list-item"><div><strong>${r.motorista}</strong><span class="list-sub">Score ${formatNumber(r.score,1)} • Consumo ${formatNumber(r.consumo,2)} km/l${r.meta ? ` • Meta ${formatNumber(r.meta,2)}` : ''}</span></div><span class="training-level lvl-high">prioridade</span></div>`).join('')}</div></div>
+          </div>` : emptyHtml;
+        targets.forEach(([titleId, boxId]) => {
+          const title = document.getElementById(titleId);
+          const box = document.getElementById(boxId);
+          if (!title || !box) return;
+          title.textContent = titleText;
+          box.innerHTML = html;
+        });
+        return;
+      }
+
+      const s = computeMonthSummary(rows);
+      const prevMonth = previousLoadedMonth(month);
+      const prevRows = prevMonth ? getFilteredRows(prevMonth) : [];
+      const prevSummary = computeMonthSummary(prevRows);
+      const scoreDelta = deltaInfo(s.scoreMedio, prevSummary.scoreMedio, true, ' pts', 1);
+      const html = `
+        <div class="summary-panel">
+          <div class="summary-box"><div class="subtle">Equipamentos</div><div class="score-number">${formatInt(rows.length)}</div><div class="subtle">Frotas analisadas no mês</div></div>
+          <div class="summary-box"><div class="subtle">Score médio</div><div class="score-number">${formatNumber(s.scoreMedio,1)}</div><div class="delta ${scoreDelta.cls}">${scoreDelta.text}</div></div>
+          <div class="summary-box"><div class="subtle">Consumo</div><div class="score-number">${formatNumber(s.consumoMedio,2)}</div><div class="subtle">km/l ${s.metaMedia ? `• meta ${formatNumber(s.metaMedia,2)}` : ''}</div></div>
+          <div class="summary-box"><div class="subtle">Pontos de atenção</div><div class="subtle" style="margin-top:10px; line-height:1.7;">Marcha lenta: <strong>${formatNumber(s.marchaLenta,1)}%</strong><br>Excesso vel.: <strong>${formatNumber(s.excessoVelocidade,1)}%</strong><br>Freadas: <strong>${formatNumber(s.freadasBruscas,2)}</strong></div></div>
+        </div>`;
+      targets.forEach(([titleId, boxId]) => {
+        const title = document.getElementById(titleId);
+        const box = document.getElementById(boxId);
+        if (!title || !box) return;
+        title.textContent = state.selectedDriver;
+        box.innerHTML = html;
+      });
     }
 
     function renderDriverSummary(month) {
@@ -464,19 +481,8 @@
       const title = document.getElementById('driverSummaryTitle');
       const rows = getFilteredRows(month);
       if (state.selectedDriver === 'TODOS') {
-        const ranking = computeDriverRanking(month);
-        title.textContent = 'Visão executiva de condutores';
-        if (!ranking.length) {
-          box.innerHTML = '<div class="empty">Sem dados de motoristas para este período.</div>';
-          return;
-        }
-        const best = ranking.slice(0,5);
-        const worst = ranking.slice(-5).reverse();
-        box.innerHTML = `
-          <div class="summary-panel">
-            <div class="summary-box tall"><div class="subtle">Top motoristas do mês</div><div class="list">${best.map(r => `<div class="list-item"><div><strong>${r.motorista}</strong><span class="list-sub">Score ${formatNumber(r.score,1)} • Consumo ${formatNumber(r.consumo,2)} km/l${r.meta ? ` • Meta ${formatNumber(r.meta,2)}` : ''}</span></div><span class="training-level lvl-low">destaque</span></div>`).join('')}</div></div>
-            <div class="summary-box tall"><div class="subtle">Condutores para ação imediata</div><div class="list">${worst.map(r => `<div class="list-item"><div><strong>${r.motorista}</strong><span class="list-sub">Score ${formatNumber(r.score,1)} • Consumo ${formatNumber(r.consumo,2)} km/l${r.meta ? ` • Meta ${formatNumber(r.meta,2)}` : ''}</span></div><span class="training-level lvl-high">prioridade</span></div>`).join('')}</div></div>
-          </div>`;
+        title.textContent = 'Todos os motoristas';
+        box.innerHTML = '<div class="empty">Selecione um motorista no filtro para ver a análise individual e identificar necessidade de treinamento.</div>';
         return;
       }
       const s = computeMonthSummary(rows);
@@ -490,58 +496,11 @@
         </div>`;
     }
 
-    function buildDriverSummary(month) {
-      const rows = getFilteredRows(month);
-      if (state.selectedDriver === 'TODOS') {
-        const ranking = computeDriverRanking(month);
-        if (!ranking.length) {
-          return {
-            title: 'Visão executiva de condutores',
-            html: '<div class="empty">Sem dados de motoristas para este período.</div>'
-          };
-        }
-        const best = ranking.slice(0,5);
-        const worst = ranking.slice(-5).reverse();
-        return {
-          title: 'Visão executiva de condutores',
-          html: `
-            <div class="summary-panel">
-              <div class="summary-box tall"><div class="subtle">Top motoristas do mês</div><div class="list">${best.map(r => `<div class="list-item"><div><strong>${r.motorista}</strong><span class="list-sub">Score ${formatNumber(r.score,1)} • Consumo ${formatNumber(r.consumo,2)} km/l${r.meta ? ` • Meta ${formatNumber(r.meta,2)}` : ''}</span></div><span class="training-level lvl-low">destaque</span></div>`).join('')}</div></div>
-              <div class="summary-box tall"><div class="subtle">Condutores para ação imediata</div><div class="list">${worst.map(r => `<div class="list-item"><div><strong>${r.motorista}</strong><span class="list-sub">Score ${formatNumber(r.score,1)} • Consumo ${formatNumber(r.consumo,2)} km/l${r.meta ? ` • Meta ${formatNumber(r.meta,2)}` : ''}</span></div><span class="training-level lvl-high">prioridade</span></div>`).join('')}</div></div>
-            </div>`
-        };
-      }
-
-      const s = computeMonthSummary(rows);
-      const prevMonth = previousLoadedMonth(month);
-      const prevRows = prevMonth ? getFilteredRows(prevMonth) : [];
-      const prevSummary = computeMonthSummary(prevRows);
-      const scoreDelta = deltaInfo(s.scoreMedio, prevSummary.scoreMedio, true, ' pts', 1);
-
-      return {
-        title: state.selectedDriver,
-        html: `
-          <div class="summary-panel">
-            <div class="summary-box"><div class="subtle">Equipamentos</div><div class="score-number">${formatInt(rows.length)}</div><div class="subtle">Frotas analisadas no mês</div></div>
-            <div class="summary-box"><div class="subtle">Score médio</div><div class="score-number">${formatNumber(s.scoreMedio,1)}</div><div class="delta ${scoreDelta.cls}">${scoreDelta.text}</div></div>
-            <div class="summary-box"><div class="subtle">Consumo</div><div class="score-number">${formatNumber(s.consumoMedio,2)}</div><div class="subtle">km/l ${s.metaMedia ? `• meta ${formatNumber(s.metaMedia,2)}` : ''}</div></div>
-            <div class="summary-box"><div class="subtle">Pontos de atenção</div><div class="subtle" style="margin-top:10px; line-height:1.7;">Marcha lenta: <strong>${formatNumber(s.marchaLenta,1)}%</strong><br>Excesso vel.: <strong>${formatNumber(s.excessoVelocidade,1)}%</strong><br>Freadas: <strong>${formatNumber(s.freadasBruscas,2)}</strong></div></div>
-          </div>`
-      };
-    }
-
     function renderDriverSummary(month) {
-      const summary = buildDriverSummary(month);
-      [
+      renderDriverSummaryTargets(month, [
         ['driverSummaryTitle', 'driverSummaryBox'],
         ['driverSummaryTitleFleet', 'driverSummaryBoxFleet']
-      ].forEach(([titleId, boxId]) => {
-        const title = document.getElementById(titleId);
-        const box = document.getElementById(boxId);
-        if (!title || !box) return;
-        title.textContent = summary.title;
-        box.innerHTML = summary.html;
-      });
+      ]);
     }
 
     function renderIdleImpactChart(month) {
@@ -578,10 +537,7 @@
         plotOptions: { bar: { horizontal: true, borderRadius: 8, barHeight: '66%' } },
         colors: ['#8b5cf6'],
         dataLabels: { enabled: true },
-        xaxis: {
-          categories: rows.map(r => r.equipamento),
-          title: { text: 'Litros estimados' }
-        },
+        xaxis: { categories: rows.map(r => r.equipamento), title: { text: 'Litros estimados' } },
         grid: { borderColor: '#e5e7eb' },
         tooltip: {
           y: {
@@ -596,14 +552,16 @@
     }
 
     function setupPageLayout() {
-      const operationalPage = document.getElementById('pageOperational');
       const footer = document.querySelector('.footer-note');
-      if (!operationalPage || !footer) return;
+      if (!footer) return;
 
-      const trendCharts = operationalPage.querySelectorAll('#chartTrend');
-      if (trendCharts.length > 1) {
-        const extraTrendBlock = trendCharts[1].closest('.stack-grid');
-        if (extraTrendBlock) extraTrendBlock.style.display = 'none';
+      const operationalPage = document.getElementById('pageOperational');
+      if (operationalPage) {
+        const trendCharts = operationalPage.querySelectorAll('#chartTrend');
+        if (trendCharts.length > 1) {
+          const extraTrendBlock = trendCharts[1].closest('.stack-grid');
+          if (extraTrendBlock) extraTrendBlock.style.display = 'none';
+        }
       }
 
       let pageFleet = document.getElementById('pageFleet');
@@ -656,12 +614,10 @@
         operational: 'pageOperational',
         fleet: 'pageFleet'
       };
-
       Object.entries(pageMap).forEach(([key, id]) => {
         const section = document.getElementById(id);
         if (section) section.classList.toggle('active', key === page);
       });
-
       document.querySelectorAll('.nav-pill[data-page]').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.page === page);
       });
@@ -673,25 +629,6 @@
         btn.dataset.navBound = '1';
         btn.addEventListener('click', () => setActivePage(btn.dataset.page));
       });
-    }
-
-    function renderGradeDistribution(month) {
-      const rows = state.monthData[month] || [];
-      const counts = ['A','B','C','D','E'].map(g => rows.filter(r => r.grade === g).length);
-      if (state.charts.gradeDist) state.charts.gradeDist.destroy();
-      state.charts.gradeDist = new ApexCharts(document.querySelector('#chartGradeDist'), {
-        chart: { type: 'bar', height: 250, toolbar: { show: false } },
-        series: [{ name: 'Equipamentos', data: counts }],
-        xaxis: { categories: ['A','B','C','D','E'] },
-        colors: ['#22c55e','#84cc16','#eab308','#f97316','#ef4444'],
-        plotOptions: { bar: { borderRadius: 10, distributed: true, columnWidth: '52%' } },
-        dataLabels: { enabled: true },
-        legend: { show: false },
-        grid: { borderColor: '#e5e7eb' },
-        yaxis: { title: { text: 'Quantidade' } }
-      });
-      state.charts.gradeDist.render();
-      document.getElementById('gradeDistSubtitle').textContent = `Frota completa de ${month}`;
     }
 
     function renderTable(month) {
