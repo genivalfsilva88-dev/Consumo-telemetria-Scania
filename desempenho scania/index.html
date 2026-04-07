@@ -192,6 +192,25 @@
       letter-spacing: -.03em;
     }
     .brand p { margin-top: 6px; }
+    .brand-block { display:grid; gap:12px; min-width:0; }
+    .topnav { display:flex; gap:10px; flex-wrap:wrap; }
+    .nav-pill {
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.10);
+      color: rgba(255,255,255,.86);
+      border-radius: 999px;
+      padding: 10px 14px;
+      font: inherit;
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+      backdrop-filter: blur(12px);
+    }
+    .nav-pill.active {
+      background: #fff;
+      color: var(--navy);
+      box-shadow: 0 12px 24px rgba(0,0,0,.14);
+    }
     .control-label {
       letter-spacing: .08em;
       font-weight: 800;
@@ -216,6 +235,37 @@
     .month-chip.active {
       background: linear-gradient(135deg, rgba(37,99,235,.16), rgba(59,196,255,.22));
       border-color: rgba(37,99,235,.20);
+    }
+    .page-section { display:none; gap:18px; }
+    .page-section.active { display:grid; }
+    .page-head {
+      display:flex;
+      justify-content:space-between;
+      gap:16px;
+      align-items:flex-end;
+      flex-wrap:wrap;
+      margin-bottom: 2px;
+    }
+    .page-kicker {
+      display:block;
+      margin-bottom: 6px;
+      font-size: 11px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 800;
+    }
+    .page-title {
+      margin: 0;
+      font-size: clamp(26px, 3vw, 38px);
+      line-height: 1;
+      letter-spacing: -.04em;
+      font-weight: 800;
+    }
+    .page-note {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
     }
     .hero-banner {
       display: grid;
@@ -300,6 +350,8 @@
       font-size: 12px;
       color: rgba(255,255,255,.72);
     }
+    .fleet-detail-grid { display:grid; grid-template-columns: .86fr 1.14fr; gap:18px; align-items:start; }
+    .fleet-side { display:grid; gap:18px; }
     .executive-strip {
       grid-template-columns: repeat(2, minmax(0,1fr));
       align-content: stretch;
@@ -371,17 +423,19 @@
       .grid-analytics, .charts-grid, .compare-grid { grid-template-columns: 1fr; }
       .cards-grid { grid-template-columns: repeat(3, minmax(0,1fr)); }
       .mini-grid, .action-grid, .hero-stats { grid-template-columns: repeat(2, minmax(0,1fr)); }
-      .stack-grid, .grid-analytics, .compare-grid { grid-template-columns: 1fr; }
+      .stack-grid, .grid-analytics, .compare-grid, .fleet-detail-grid { grid-template-columns: 1fr; }
     }
     @media (max-width: 760px) {
       .container { padding: 14px 12px 28px; }
       .topbar-inner { padding: 12px; }
       .brand { align-items:flex-start; }
       .brand img { width: 110px; }
+      .topnav { display:grid; grid-template-columns: 1fr; }
       .toolbar { grid-template-columns: 1fr; }
       .hero-copy { padding: 20px; }
       .hero-heading { font-size: 34px; }
       .cards-grid, .mini-grid, .summary-panel, .action-grid, .hero-stats, .executive-strip { grid-template-columns: 1fr; }
+      .page-head { align-items:flex-start; }
       .statusbar { align-items:flex-start; }
       .month-chip { padding:8px 11px; }
       .panel, .card { border-radius: 18px; }
@@ -400,11 +454,18 @@
 <body>
   <div class="topbar">
     <div class="topbar-inner">
-      <div class="brand">
-        <img id="logoImg" alt="Logo Ziran" />
-        <div>
-          <h1>Ziran Logistica e transporte</h1>
-          <p>Painel de Desempenho</p>
+      <div class="brand-block">
+        <div class="brand">
+          <img id="logoImg" alt="Logo Ziran" />
+          <div>
+            <h1>Ziran Logistica e transporte</h1>
+            <p>Painel de Desempenho</p>
+          </div>
+        </div>
+        <div class="topnav">
+          <button class="nav-pill active" id="navExecutive" data-page="executive">Dashboard executivo</button>
+          <button class="nav-pill" id="navOperational" data-page="operational">Análise operacional</button>
+          <button class="nav-pill" id="navFleet" data-page="fleet">Detalhamento da frota</button>
         </div>
       </div>
       <div class="toolbar">
@@ -428,6 +489,15 @@
       <div class="available-months" id="availableMonths"></div>
       <div class="badge" id="lastUpdateBadge">Carregando base...</div>
     </div>
+
+    <section class="page-section active" id="pageExecutive">
+      <div class="page-head">
+        <div>
+          <span class="page-kicker">Página 1</span>
+          <h2 class="page-title">Dashboard executivo</h2>
+        </div>
+        <div class="page-note">KPIs, meta, comparativos e visão rápida para decisão</div>
+      </div>
 
     <div class="hero-banner">
       <section class="hero-copy">
@@ -558,6 +628,27 @@
           <div class="kpi-foot">Motoristas com consumo abaixo da meta no mês selecionado</div>
         </article>
       </div>
+
+      <div class="stack-grid">
+        <section class="panel">
+          <div class="panel-head">
+            <h3 class="panel-title" style="margin:0;">Evolução mensal de consumo e score</h3>
+            <span class="subtle">12 meses</span>
+          </div>
+          <div id="chartTrend"></div>
+        </section>
+      </div>
+
+      </section>
+
+      <section class="page-section" id="pageOperational">
+        <div class="page-head">
+          <div>
+            <span class="page-kicker">Página 2</span>
+            <h2 class="page-title">Análise operacional</h2>
+          </div>
+          <div class="page-note">Comportamento de condução, rankings e treinamento</div>
+        </div>
 
       <div class="mini-grid">
         <section class="panel mini-card">

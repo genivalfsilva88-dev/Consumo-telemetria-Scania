@@ -14,6 +14,7 @@
       charts: {},
       selectedMonth: null,
       selectedDriver: 'TODOS',
+      currentPage: 'executive',
       metaMap: new Map()
     };
 
@@ -489,6 +490,191 @@
         </div>`;
     }
 
+    function buildDriverSummary(month) {
+      const rows = getFilteredRows(month);
+      if (state.selectedDriver === 'TODOS') {
+        const ranking = computeDriverRanking(month);
+        if (!ranking.length) {
+          return {
+            title: 'Visão executiva de condutores',
+            html: '<div class="empty">Sem dados de motoristas para este período.</div>'
+          };
+        }
+        const best = ranking.slice(0,5);
+        const worst = ranking.slice(-5).reverse();
+        return {
+          title: 'Visão executiva de condutores',
+          html: `
+            <div class="summary-panel">
+              <div class="summary-box tall"><div class="subtle">Top motoristas do mês</div><div class="list">${best.map(r => `<div class="list-item"><div><strong>${r.motorista}</strong><span class="list-sub">Score ${formatNumber(r.score,1)} • Consumo ${formatNumber(r.consumo,2)} km/l${r.meta ? ` • Meta ${formatNumber(r.meta,2)}` : ''}</span></div><span class="training-level lvl-low">destaque</span></div>`).join('')}</div></div>
+              <div class="summary-box tall"><div class="subtle">Condutores para ação imediata</div><div class="list">${worst.map(r => `<div class="list-item"><div><strong>${r.motorista}</strong><span class="list-sub">Score ${formatNumber(r.score,1)} • Consumo ${formatNumber(r.consumo,2)} km/l${r.meta ? ` • Meta ${formatNumber(r.meta,2)}` : ''}</span></div><span class="training-level lvl-high">prioridade</span></div>`).join('')}</div></div>
+            </div>`
+        };
+      }
+
+      const s = computeMonthSummary(rows);
+      const prevMonth = previousLoadedMonth(month);
+      const prevRows = prevMonth ? getFilteredRows(prevMonth) : [];
+      const prevSummary = computeMonthSummary(prevRows);
+      const scoreDelta = deltaInfo(s.scoreMedio, prevSummary.scoreMedio, true, ' pts', 1);
+
+      return {
+        title: state.selectedDriver,
+        html: `
+          <div class="summary-panel">
+            <div class="summary-box"><div class="subtle">Equipamentos</div><div class="score-number">${formatInt(rows.length)}</div><div class="subtle">Frotas analisadas no mês</div></div>
+            <div class="summary-box"><div class="subtle">Score médio</div><div class="score-number">${formatNumber(s.scoreMedio,1)}</div><div class="delta ${scoreDelta.cls}">${scoreDelta.text}</div></div>
+            <div class="summary-box"><div class="subtle">Consumo</div><div class="score-number">${formatNumber(s.consumoMedio,2)}</div><div class="subtle">km/l ${s.metaMedia ? `• meta ${formatNumber(s.metaMedia,2)}` : ''}</div></div>
+            <div class="summary-box"><div class="subtle">Pontos de atenção</div><div class="subtle" style="margin-top:10px; line-height:1.7;">Marcha lenta: <strong>${formatNumber(s.marchaLenta,1)}%</strong><br>Excesso vel.: <strong>${formatNumber(s.excessoVelocidade,1)}%</strong><br>Freadas: <strong>${formatNumber(s.freadasBruscas,2)}</strong></div></div>
+          </div>`
+      };
+    }
+
+    function renderDriverSummary(month) {
+      const summary = buildDriverSummary(month);
+      [
+        ['driverSummaryTitle', 'driverSummaryBox'],
+        ['driverSummaryTitleFleet', 'driverSummaryBoxFleet']
+      ].forEach(([titleId, boxId]) => {
+        const title = document.getElementById(titleId);
+        const box = document.getElementById(boxId);
+        if (!title || !box) return;
+        title.textContent = summary.title;
+        box.innerHTML = summary.html;
+      });
+    }
+
+    function renderIdleImpactChart(month) {
+      const target = document.querySelector('#chartIdleImpact');
+      if (!target) return;
+
+      const rows = getFilteredRows(month)
+        .map(r => ({
+          ...r,
+          idleImpact: r.consumo > 0 && r.distancia > 0 ? (r.distancia / r.consumo) * (r.marchaLenta / 100) : 0
+        }))
+        .filter(r => r.idleImpact > 0)
+        .sort((a,b) => b.idleImpact - a.idleImpact)
+        .slice(0, 10)
+        .reverse();
+
+      const subtitle = document.getElementById('idleImpactSubtitle');
+      if (subtitle) {
+        subtitle.textContent = state.selectedDriver === 'TODOS'
+          ? `Maiores impactos por equipamento em ${month}`
+          : `Impacto estimado de marcha lenta para ${state.selectedDriver}`;
+      }
+
+      if (state.charts.idleImpact) state.charts.idleImpact.destroy();
+      if (!rows.length) {
+        target.innerHTML = '<div class="empty">Sem dados suficientes para estimar impacto de marcha lenta.</div>';
+        return;
+      }
+
+      target.innerHTML = '';
+      state.charts.idleImpact = new ApexCharts(target, {
+        chart: { type: 'bar', height: 300, toolbar: { show: false } },
+        series: [{ name: 'Litros estimados', data: rows.map(r => Number(r.idleImpact.toFixed(1))) }],
+        plotOptions: { bar: { horizontal: true, borderRadius: 8, barHeight: '66%' } },
+        colors: ['#8b5cf6'],
+        dataLabels: { enabled: true },
+        xaxis: {
+          categories: rows.map(r => r.equipamento),
+          title: { text: 'Litros estimados' }
+        },
+        grid: { borderColor: '#e5e7eb' },
+        tooltip: {
+          y: {
+            formatter: (_, ctx) => {
+              const item = rows[ctx.dataPointIndex];
+              return `${formatNumber(item.idleImpact,1)} L • ${item.motorista} • placa ${item.placa} • ${formatNumber(item.marchaLenta,1)}%`;
+            }
+          }
+        }
+      });
+      state.charts.idleImpact.render();
+    }
+
+    function setupPageLayout() {
+      const operationalPage = document.getElementById('pageOperational');
+      const footer = document.querySelector('.footer-note');
+      if (!operationalPage || !footer) return;
+
+      const trendCharts = operationalPage.querySelectorAll('#chartTrend');
+      if (trendCharts.length > 1) {
+        const extraTrendBlock = trendCharts[1].closest('.stack-grid');
+        if (extraTrendBlock) extraTrendBlock.style.display = 'none';
+      }
+
+      let pageFleet = document.getElementById('pageFleet');
+      if (!pageFleet) {
+        pageFleet = document.createElement('section');
+        pageFleet.className = 'page-section';
+        pageFleet.id = 'pageFleet';
+        pageFleet.innerHTML = `
+          <div class="page-head">
+            <div>
+              <span class="page-kicker">Página 3</span>
+              <h2 class="page-title">Detalhamento da frota</h2>
+            </div>
+            <div class="page-note">Página operacional para análise, auditoria e acompanhamento por equipamento</div>
+          </div>
+          <div class="fleet-detail-grid" id="fleetDetailGrid">
+            <div class="fleet-side">
+              <section class="panel soft-accent">
+                <div class="panel-head">
+                  <h3 class="panel-title" style="margin:0;">Maiores consumos em marcha lenta</h3>
+                  <span class="subtle" id="idleImpactSubtitle">Maiores impactos por equipamento no filtro atual</span>
+                </div>
+                <div id="chartIdleImpact"></div>
+              </section>
+              <section class="panel soft-accent">
+                <div class="panel-head">
+                  <h3 class="panel-title" style="margin:0;">Resumo do motorista filtrado</h3>
+                  <span class="subtle" id="driverSummaryTitleFleet">Todos os motoristas</span>
+                </div>
+                <div id="driverSummaryBoxFleet">
+                  <div class="empty">Selecione um motorista para análise individual.</div>
+                </div>
+              </section>
+            </div>
+          </div>`;
+        footer.parentNode.insertBefore(pageFleet, footer);
+      }
+
+      const tablePanel = document.getElementById('tableWrap')?.closest('.panel');
+      const fleetGrid = document.getElementById('fleetDetailGrid');
+      if (tablePanel && fleetGrid && tablePanel.parentElement !== fleetGrid) {
+        fleetGrid.appendChild(tablePanel);
+      }
+    }
+
+    function setActivePage(page) {
+      state.currentPage = page;
+      const pageMap = {
+        executive: 'pageExecutive',
+        operational: 'pageOperational',
+        fleet: 'pageFleet'
+      };
+
+      Object.entries(pageMap).forEach(([key, id]) => {
+        const section = document.getElementById(id);
+        if (section) section.classList.toggle('active', key === page);
+      });
+
+      document.querySelectorAll('.nav-pill[data-page]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.page === page);
+      });
+    }
+
+    function setupPageNav() {
+      document.querySelectorAll('.nav-pill[data-page]').forEach(btn => {
+        if (btn.dataset.navBound === '1') return;
+        btn.dataset.navBound = '1';
+        btn.addEventListener('click', () => setActivePage(btn.dataset.page));
+      });
+    }
+
     function renderGradeDistribution(month) {
       const rows = state.monthData[month] || [];
       const counts = ['A','B','C','D','E'].map(g => rows.filter(r => r.grade === g).length);
@@ -558,7 +744,9 @@
       renderGradeDistribution(state.selectedMonth);
       renderTrainingList(state.selectedMonth);
       renderDriverSummary(state.selectedMonth);
+      renderIdleImpactChart(state.selectedMonth);
       renderTable(state.selectedMonth);
+      setActivePage(state.currentPage);
       const loadedCount = getMonthsWithData().length;
       document.getElementById('lastUpdateBadge').textContent = `Período: ${state.selectedMonth} • ${loadedCount} mês(es) com dados • Filtro: ${state.selectedDriver === 'TODOS' ? 'Todos' : state.selectedDriver}`;
     }
@@ -574,6 +762,8 @@
           catch (err) { console.warn(`Falha ao carregar ${month}`, err); return [month, []]; }
         }));
         state.monthData = Object.fromEntries(monthResults);
+        setupPageLayout();
+        setupPageNav();
         populateMonthSelect();
         populateDriverSelect();
         renderDashboard();
@@ -586,5 +776,9 @@
 
     document.getElementById('refreshBtn').addEventListener('click', init);
     document.getElementById('pdfBtn').addEventListener('click', () => window.print());
-    window.addEventListener('load', init);
+    window.addEventListener('load', () => {
+      setupPageLayout();
+      setupPageNav();
+      init();
+    });
   
