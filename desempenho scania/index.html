@@ -509,7 +509,7 @@
         <h2 class="hero-heading">Consumo, risco e resposta operacional em uma leitura.</h2>
         <div class="hero-note">Painel mensal desenhado para destacar eficiência da frota, pressão sobre custo de diesel, comportamento de condução e equipamentos que pedem ação imediata.</div>
         <div class="hero-stats">
-          <div class="hero-stat"><span class="hero-stat-label">Visão</span><div class="hero-stat-value">360°</div><div class="hero-stat-foot">Frota, motorista, score e custo no mesmo fluxo.</div></div>
+          <div class="hero-stat"><span class="hero-stat-label">Visão</span><div class="hero-stat-value">360°</div><div class="hero-stat-foot">Frota, motorista, nota e custo no mesmo fluxo.</div></div>
           <div class="hero-stat"><span class="hero-stat-label">Decisão</span><div class="hero-stat-value">Mensal</div><div class="hero-stat-foot">Compare tendência, desvio e potencial de economia.</div></div>
           <div class="hero-stat"><span class="hero-stat-label">Foco</span><div class="hero-stat-value">Ação</div><div class="hero-stat-foot">Treinamento e correção rápida onde o painel sinaliza perda.</div></div>
         </div>
@@ -556,7 +556,7 @@
           <h3 class="panel-title">Avaliação geral da frota</h3>
           <div class="summary-panel">
             <div class="summary-box tall">
-              <div class="subtle">Score médio (Driver Support)</div>
+              <div class="subtle">Nota média do motorista</div>
               <div class="score-big">
                 <div class="score-number" id="scoreNumber">-</div>
                 <div class="score-letter" id="scoreLetter">-</div>
@@ -611,7 +611,7 @@
         <article class="card action-card">
           <div class="kpi-top"><div class="kpi-meta"><div class="kpi-label">Equipamentos críticos</div><div class="metric-line"><div class="metric-big" id="criticalCount">-</div><div class="metric-sub" id="criticalPct">-</div></div></div><div class="iconbox">🚨</div></div>
           <div class="delta flat" id="deltaCritical">— vs mês anterior</div>
-          <div class="kpi-foot">Score baixo ou desempenho abaixo da meta no período filtrado</div>
+          <div class="kpi-foot">Nota baixa ou desempenho abaixo da meta no período filtrado</div>
         </article>
       </div>
 
@@ -636,7 +636,7 @@
       <div class="stack-grid">
         <section class="panel">
           <div class="panel-head">
-            <h3 class="panel-title" style="margin:0;">Evolução mensal de consumo e score</h3>
+            <h3 class="panel-title" style="margin:0;">Evolução mensal de consumo e nota</h3>
             <span class="subtle">12 meses</span>
           </div>
           <div id="chartTrend"></div>
@@ -675,17 +675,17 @@
           <div class="mini-note">Média percentual do mês</div>
         </section>
         <section class="panel mini-card">
-          <div class="mini-top"><div class="mini-label">Freadas bruscas</div><div class="mini-icon">🛑</div></div>
-          <div class="mini-value" id="indFreadas">-</div>
-          <div class="delta flat" id="deltaFreadas">— vs mês anterior</div>
-          <div class="mini-note">Ocorrências a cada 100 km</div>
+          <div class="mini-top"><div class="mini-label">Uso do suporte</div><div class="mini-icon">🎛️</div></div>
+          <div class="mini-value" id="indSupport">-</div>
+          <div class="delta flat" id="deltaSupport">— vs mês anterior</div>
+          <div class="mini-note">Utilização média do suporte do motorista</div>
         </section>
       </div>
 
       <div class="stack-grid">
         <section class="panel">
           <div class="panel-head">
-            <h3 class="panel-title" style="margin:0;">Evolução mensal de consumo e score</h3>
+            <h3 class="panel-title" style="margin:0;">Evolução mensal de consumo e nota</h3>
             <span class="subtle">12 meses</span>
           </div>
           <div id="chartTrend"></div>
@@ -720,7 +720,7 @@
         <section class="panel soft-accent">
           <div class="panel-head">
             <h3 class="panel-title" style="margin:0;">Motoristas que precisam de atenção</h3>
-            <span class="subtle">Baseado em score e consumo x meta</span>
+            <span class="subtle">Baseado na nota composta e no consumo x meta</span>
           </div>
           <div class="list" id="trainingList"></div>
         </section>

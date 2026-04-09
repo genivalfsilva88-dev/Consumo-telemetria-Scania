@@ -34,6 +34,40 @@
     function gradeFromScore(score) { if (score >= 90) return 'A'; if (score >= 80) return 'B'; if (score >= 70) return 'C'; if (score >= 60) return 'D'; return 'E'; }
     function gradeClass(letter) { return `grade-${String(letter||'e').toLowerCase()}`; }
     function pillColor(letter) { return ({ A:'#16a34a', B:'#65a30d', C:'#ca8a04', D:'#ea580c', E:'#dc2626' })[letter] || '#64748b'; }
+    function clamp(value, min = 0, max = 100) { return Math.max(min, Math.min(max, Number.isFinite(value) ? value : 0)); }
+    function firstNumber(row, keys) {
+      for (const key of keys) {
+        if (row[key] != null && row[key] !== '') return parseNumber(row[key]);
+      }
+      return 0;
+    }
+    function computeConsumptionScore(consumo, meta) {
+      if (!(meta > 0)) return null;
+      return clamp((consumo / meta) * 100);
+    }
+    function computeIdleScore(marchaLenta) {
+      if (!(marchaLenta >= 0)) return null;
+      if (marchaLenta <= 20) return 100;
+      return clamp((20 / marchaLenta) * 100);
+    }
+    function computeInertiaScore(inercia) {
+      if (!(inercia >= 0)) return null;
+      return clamp(inercia);
+    }
+    function computeSpeedScore(excessoVelocidade) {
+      if (!(excessoVelocidade >= 0)) return null;
+      return clamp(100 - (excessoVelocidade * 5));
+    }
+    function computeDriverNote({ consumo, meta, supportUsage, marchaLenta, inercia, excessoVelocidade }) {
+      const components = [
+        computeConsumptionScore(consumo, meta),
+        clamp(supportUsage),
+        computeIdleScore(marchaLenta),
+        computeInertiaScore(inercia),
+        computeSpeedScore(excessoVelocidade)
+      ].filter(v => v != null);
+      return components.length ? avg(components.map(v => ({ value: v })), 'value') : 0;
+    }
 
     function loadSheetJSONP(sheetName) {
       return new Promise((resolve, reject) => {
@@ -76,14 +110,36 @@
         const equipamento = String(row['Equipamento'] || '').trim();
         if (!equipamento) return null;
         const metaInfo = state.metaMap.get(equipamento) || {};
-        const score = parseNumber(row['Scania Driver Support (%)']);
+        const supportUsage = firstNumber(row, [
+          'Scania Driver Support (%)',
+          'Utilização do Scania Driver Support (%)',
+          'Utilizacao do Scania Driver Support (%)',
+          'Uso do Scania Driver Support (%)',
+          'Uso do suporte do motorista (%)',
+          'Utilização do suporte do motorista (%)',
+          'Utilizacao do suporte do motorista (%)'
+        ]);
         const consumo = parseNumber(row['Consumo de combustível (km/l)']);
+        const inercia = parseNumber(row['VeÃ­culo engrenado sem injeÃ§Ã£o de combustÃ­vel (%)']);
+        const marchaLenta = parseNumber(row['Marcha lenta (%)']);
+        const excessoVelocidade = parseNumber(row['Excesso de velocidade (%)']);
+        const inerciaValue = parseNumber(row['Veículo engrenado sem injeção de combustível (%)']) || parseNumber(row['VeÃ­culo engrenado sem injeÃ§Ã£o de combustÃ­vel (%)']) || inercia;
+        const score = computeDriverNote({
+          consumo,
+          meta: metaInfo.meta || 0,
+          supportUsage,
+          marchaLenta,
+          inercia: inerciaValue,
+          excessoVelocidade
+        });
         return {
           equipamento,
           hodometro: parseNumber(row['Hodômetro (km)']),
           distancia: parseNumber(row['Distância (km)']),
           score,
+          supportUsage,
           inercia: parseNumber(row['Veículo engrenado sem injeção de combustível (%)']),
+          inercia: inerciaValue,
           marchaLenta: parseNumber(row['Marcha lenta (%)']),
           excessoVelocidade: parseNumber(row['Excesso de velocidade (%)']),
           freadasBruscas: parseNumber(row['Freadas bruscas (n°/100 km)']) || parseNumber(row['Freadas bruscas (n/100 km)']),
@@ -111,7 +167,7 @@
         const alvo = r.distancia > 0 ? r.distancia / r.meta : 0;
         return acc + Math.max(0, atual - alvo);
       }, 0);
-      const criticalRows = rows.filter(r => r.score < 55 || (r.meta > 0 && r.consumo < r.meta));
+      const criticalRows = rows.filter(r => r.score < 60 || (r.meta > 0 && r.consumo < r.meta));
       return {
         frota: rows.length,
         consumoMedio: avg(rows, 'consumo'),
@@ -119,6 +175,7 @@
         totalKm: sum(rows, 'distancia'),
         co2Total: sum(rows, 'co2'),
         scoreMedio: avg(rows, 'score'),
+        supportUsageMedio: avg(rows, 'supportUsage'),
         metaMedia: avg(validMetaRows, 'meta'),
         metaHitPct: validMetaRows.length ? (metaHitRows.length / validMetaRows.length) * 100 : 0,
         metaHitCount: metaHitRows.length,
@@ -145,7 +202,7 @@
           : `Apenas ${formatNumber(current.metaHitPct, 1)}% da frota filtrada atingiu a meta. Priorize acompanhamento.`
       });
       if (current.criticalCount > 0) {
-        items.push({ icon:'🚨', text:`${formatInt(current.criticalCount)} equipamento(s) estão em condição crítica por score baixo ou consumo abaixo da meta.` });
+        items.push({ icon:'🚨', text:`${formatInt(current.criticalCount)} equipamento(s) estão em condição crítica por nota baixa ou consumo abaixo da meta.` });
       }
       items.push({
         icon: current.savingsLiters > 0 ? '💰' : '✅',
@@ -158,7 +215,7 @@
         const consumoDiff = current.consumoMedio - previous.consumoMedio;
         items.push({
           icon: scoreDiff >= 0 ? '📈' : '📊',
-          text: `Vs ${prevMonth}, o score ${scoreDiff >= 0 ? 'subiu' : 'caiu'} ${formatNumber(Math.abs(scoreDiff),1)} pts e o consumo ${consumoDiff >= 0 ? 'melhorou' : 'reduziu'} ${formatNumber(Math.abs(consumoDiff),2)} km/l.`
+          text: `Vs ${prevMonth}, a nota ${scoreDiff >= 0 ? 'subiu' : 'caiu'} ${formatNumber(Math.abs(scoreDiff),1)} pts e o consumo ${consumoDiff >= 0 ? 'melhorou' : 'reduziu'} ${formatNumber(Math.abs(consumoDiff),2)} km/l.`
         });
       }
       return items.slice(0,4);
@@ -244,11 +301,11 @@
       document.getElementById('metaValue').textContent = s.metaMedia ? `${formatNumber(s.metaMedia, 2)} km/l` : 'Sem meta';
       const perf = s.metaMedia > 0 ? (s.consumoMedio / s.metaMedia) * 100 : 0;
       document.getElementById('metaFill').style.width = `${Math.max(0, Math.min(perf, 100))}%`;
-      document.getElementById('metaText').textContent = s.metaMedia > 0 ? `${perf >= 100 ? 'Meta atingida' : 'Abaixo da meta'} (${formatNumber(perf, 1)}%)` : 'Sem meta cadastrada para comparação';
+      document.getElementById('metaText').textContent = s.metaMedia > 0 ? `${perf >= 100 ? 'Meta atingida' : 'Abaixo da meta'} (${formatNumber(perf, 1)}%) • Suporte do motorista ${formatNumber(s.supportUsageMedio,1)}%` : `Sem meta cadastrada para comparação • Suporte do motorista ${formatNumber(s.supportUsageMedio,1)}%`;
       document.getElementById('indMarcha').textContent = `${formatNumber(s.marchaLenta, 1)}%`;
       document.getElementById('indInercia').textContent = `${formatNumber(s.inercia, 1)}%`;
       document.getElementById('indExcesso').textContent = `${formatNumber(s.excessoVelocidade, 1)}%`;
-      document.getElementById('indFreadas').textContent = formatNumber(s.freadasBruscas, 2);
+      document.getElementById('indSupport').textContent = `${formatNumber(s.supportUsageMedio, 1)}%`;
       setDelta('deltaFrota', s.frota, p.frota, true, '', 0);
       setDelta('deltaConsumo', s.consumoMedio, p.consumoMedio, true, ' km/l', 2);
       setDelta('deltaDistancia', s.distanciaMedia, p.distanciaMedia, true, ' km', 0);
@@ -258,7 +315,7 @@
       setDelta('deltaMarcha', s.marchaLenta, p.marchaLenta, false, ' p.p.', 1);
       setDelta('deltaInercia', s.inercia, p.inercia, true, ' p.p.', 1);
       setDelta('deltaExcesso', s.excessoVelocidade, p.excessoVelocidade, false, ' p.p.', 1);
-      setDelta('deltaFreadas', s.freadasBruscas, p.freadasBruscas, false, '', 2);
+      setDelta('deltaSupport', s.supportUsageMedio, p.supportUsageMedio, true, ' p.p.', 1);
       document.getElementById('metaHitPct').textContent = `${formatNumber(s.metaHitPct,1)}%`;
       document.getElementById('metaHitCount').textContent = `${formatInt(s.metaHitCount)} de ${formatInt(s.validMetaCount || s.frota)} equip.`;
       document.getElementById('savingsLiters').textContent = formatInt(s.savingsLiters);
@@ -278,7 +335,8 @@
       if (!prevMonth || previous.frota === 0) { target.innerHTML = '<div class="empty">Sem base comparativa para o mês selecionado.</div>'; return; }
       const stats = [
         ['Consumo médio', current.consumoMedio, previous.consumoMedio, true, ' km/l', 2],
-        ['Score médio', current.scoreMedio, previous.scoreMedio, true, ' pts', 1],
+        ['Nota média', current.scoreMedio, previous.scoreMedio, true, ' pts', 1],
+        ['Suporte do motorista', current.supportUsageMedio, previous.supportUsageMedio, true, ' %', 1],
         ['Marcha lenta', current.marchaLenta, previous.marchaLenta, false, ' p.p.', 1],
         ['Excesso de velocidade', current.excessoVelocidade, previous.excessoVelocidade, false, ' p.p.', 1],
         ['Km total rodado', current.totalKm, previous.totalKm, true, ' km', 0],
@@ -300,11 +358,11 @@
       const data = monthlyTrend().filter(item => item.frota > 0);
       const options = {
         chart: { type: 'line', height: 320, toolbar: { show: false }, zoom: { enabled: false } },
-        series: [{ name: 'Consumo médio', data: data.map(x => Number(x.consumo.toFixed(2))) }, { name: 'Meta média', data: data.map(x => Number((x.meta || 0).toFixed(2))) }, { name: 'Score médio', data: data.map(x => Number(x.score.toFixed(1))) }],
+        series: [{ name: 'Consumo médio', data: data.map(x => Number(x.consumo.toFixed(2))) }, { name: 'Meta média', data: data.map(x => Number((x.meta || 0).toFixed(2))) }, { name: 'Nota média', data: data.map(x => Number(x.score.toFixed(1))) }],
         stroke: { curve: 'smooth', width: [4, 2, 3], dashArray: [0, 6, 0] },
         colors: ['#2563eb', '#16a34a', '#d71920'],
         xaxis: { categories: data.map(x => x.month.slice(0,3)) },
-        yaxis: [{ title: { text: 'km/l' } }, { opposite: true, title: { text: 'Score' } }],
+        yaxis: [{ title: { text: 'km/l' } }, { opposite: true, title: { text: 'Nota' } }],
         dataLabels: { enabled: false },
         legend: { position: 'top' },
         grid: { borderColor: '#e5e7eb' },
@@ -390,11 +448,12 @@
       });
       return Array.from(byDriver.entries()).map(([motorista, items]) => {
         const s = computeMonthSummary(items);
-        const severity = (s.scoreMedio < 55 ? 2 : 0) + (s.metaMedia > 0 && s.consumoMedio < s.metaMedia ? 1 : 0) + (s.excessoVelocidade > 5 ? 1 : 0) + (s.freadasBruscas > 0.25 ? 1 : 0);
+        const severity = (s.scoreMedio < 60 ? 2 : 0) + (s.metaMedia > 0 && s.consumoMedio < s.metaMedia ? 1 : 0) + (s.supportUsageMedio < 60 ? 1 : 0) + (s.marchaLenta > 20 ? 1 : 0) + (s.excessoVelocidade > 5 ? 1 : 0);
         return {
           motorista,
           equipamentos: items.map(i => i.equipamento).join(', '),
           score: s.scoreMedio,
+          supportUsage: s.supportUsageMedio,
           consumo: s.consumoMedio,
           meta: s.metaMedia,
           severity,
@@ -412,7 +471,7 @@
         <div class="list-item">
           <div>
             <strong>${item.motorista}</strong>
-            <span class="list-sub">Frotas: ${item.equipamentos} • Score ${formatNumber(item.score,1)} • Consumo ${formatNumber(item.consumo,2)} km/l${item.meta ? ` • Meta ${formatNumber(item.meta,2)}` : ''}</span>
+            <span class="list-sub">Frotas: ${item.equipamentos} • Nota ${formatNumber(item.score,1)} • Suporte ${formatNumber(item.supportUsage,1)}% • Consumo ${formatNumber(item.consumo,2)} km/l${item.meta ? ` • Meta ${formatNumber(item.meta,2)}` : ''}</span>
           </div>
           <span class="training-level ${item.cls}">${item.label}</span>
         </div>`).join('');
@@ -427,8 +486,8 @@
       });
       return Array.from(map.entries()).map(([motorista, items]) => {
         const s = computeMonthSummary(items);
-        const health = (s.scoreMedio * 0.6) + ((s.metaMedia ? (s.consumoMedio / s.metaMedia) * 100 : s.consumoMedio * 20) * 0.4);
-        return { motorista, score: s.scoreMedio, consumo: s.consumoMedio, meta: s.metaMedia, health };
+        const health = s.scoreMedio;
+        return { motorista, score: s.scoreMedio, supportUsage: s.supportUsageMedio, consumo: s.consumoMedio, meta: s.metaMedia, health };
       }).sort((a,b) => b.health - a.health);
     }
 
@@ -442,8 +501,8 @@
         const worst = ranking.slice(-5).reverse();
         const html = ranking.length ? `
           <div class="summary-panel">
-            <div class="summary-box tall"><div class="subtle">Top motoristas do mês</div><div class="list">${best.map(r => `<div class="list-item"><div><strong>${r.motorista}</strong><span class="list-sub">Score ${formatNumber(r.score,1)} • Consumo ${formatNumber(r.consumo,2)} km/l${r.meta ? ` • Meta ${formatNumber(r.meta,2)}` : ''}</span></div><span class="training-level lvl-low">destaque</span></div>`).join('')}</div></div>
-            <div class="summary-box tall"><div class="subtle">Condutores para ação imediata</div><div class="list">${worst.map(r => `<div class="list-item"><div><strong>${r.motorista}</strong><span class="list-sub">Score ${formatNumber(r.score,1)} • Consumo ${formatNumber(r.consumo,2)} km/l${r.meta ? ` • Meta ${formatNumber(r.meta,2)}` : ''}</span></div><span class="training-level lvl-high">prioridade</span></div>`).join('')}</div></div>
+              <div class="summary-box tall"><div class="subtle">Top motoristas do mês</div><div class="list">${best.map(r => `<div class="list-item"><div><strong>${r.motorista}</strong><span class="list-sub">Nota ${formatNumber(r.score,1)} • Suporte ${formatNumber(r.supportUsage,1)}% • Consumo ${formatNumber(r.consumo,2)} km/l${r.meta ? ` • Meta ${formatNumber(r.meta,2)}` : ''}</span></div><span class="training-level lvl-low">destaque</span></div>`).join('')}</div></div>
+              <div class="summary-box tall"><div class="subtle">Condutores para ação imediata</div><div class="list">${worst.map(r => `<div class="list-item"><div><strong>${r.motorista}</strong><span class="list-sub">Nota ${formatNumber(r.score,1)} • Suporte ${formatNumber(r.supportUsage,1)}% • Consumo ${formatNumber(r.consumo,2)} km/l${r.meta ? ` • Meta ${formatNumber(r.meta,2)}` : ''}</span></div><span class="training-level lvl-high">prioridade</span></div>`).join('')}</div></div>
           </div>` : emptyHtml;
         targets.forEach(([titleId, boxId]) => {
           const title = document.getElementById(titleId);
@@ -463,9 +522,9 @@
       const html = `
         <div class="summary-panel">
           <div class="summary-box"><div class="subtle">Equipamentos</div><div class="score-number">${formatInt(rows.length)}</div><div class="subtle">Frotas analisadas no mês</div></div>
-          <div class="summary-box"><div class="subtle">Score médio</div><div class="score-number">${formatNumber(s.scoreMedio,1)}</div><div class="delta ${scoreDelta.cls}">${scoreDelta.text}</div></div>
-          <div class="summary-box"><div class="subtle">Consumo</div><div class="score-number">${formatNumber(s.consumoMedio,2)}</div><div class="subtle">km/l ${s.metaMedia ? `• meta ${formatNumber(s.metaMedia,2)}` : ''}</div></div>
-          <div class="summary-box"><div class="subtle">Pontos de atenção</div><div class="subtle" style="margin-top:10px; line-height:1.7;">Marcha lenta: <strong>${formatNumber(s.marchaLenta,1)}%</strong><br>Excesso vel.: <strong>${formatNumber(s.excessoVelocidade,1)}%</strong><br>Freadas: <strong>${formatNumber(s.freadasBruscas,2)}</strong></div></div>
+          <div class="summary-box"><div class="subtle">Nota média</div><div class="score-number">${formatNumber(s.scoreMedio,1)}</div><div class="delta ${scoreDelta.cls}">${scoreDelta.text}</div></div>
+          <div class="summary-box"><div class="subtle">Consumo</div><div class="score-number">${formatNumber(s.consumoMedio,2)}</div><div class="subtle">km/l ${s.metaMedia ? `• meta ${formatNumber(s.metaMedia,2)}` : ''}<br>Suporte do motorista: <strong>${formatNumber(s.supportUsageMedio,1)}%</strong></div></div>
+          <div class="summary-box"><div class="subtle">Pontos de atenção</div><div class="subtle" style="margin-top:10px; line-height:1.7;">Marcha lenta: <strong>${formatNumber(s.marchaLenta,1)}%</strong><br>Inércia: <strong>${formatNumber(s.inercia,1)}%</strong><br>Excesso vel.: <strong>${formatNumber(s.excessoVelocidade,1)}%</strong></div></div>
         </div>`;
       targets.forEach(([titleId, boxId]) => {
         const title = document.getElementById(titleId);
@@ -644,7 +703,7 @@
         <table>
           <thead>
             <tr>
-              <th>Equipamento</th><th>Placa</th><th>Motorista</th><th>Meta</th><th>Consumo</th><th>Δ Consumo</th><th>Score</th><th>Δ Score</th><th>Nota</th><th>Distância</th><th>Marcha lenta</th><th>Inércia</th><th>Excesso vel.</th><th>Freadas</th><th>CO₂</th>
+              <th>Equipamento</th><th>Placa</th><th>Motorista</th><th>Meta</th><th>Consumo</th><th>Δ Consumo</th><th>Suporte</th><th>Nota</th><th>Δ Nota</th><th>Faixa</th><th>Distância</th><th>Marcha lenta</th><th>Inércia</th><th>Excesso vel.</th><th>Freadas</th><th>CO₂</th>
             </tr>
           </thead>
           <tbody>
@@ -659,6 +718,7 @@
                 <td>${r.meta ? formatNumber(r.meta,1) : '-'}</td>
                 <td><strong>${formatNumber(r.consumo,2)}</strong></td>
                 <td><span class="delta ${dCons.cls}">${dCons.text.replace(' vs mês anterior','')}</span></td>
+                <td>${formatNumber(r.supportUsage,1)}%</td>
                 <td>${formatNumber(r.score,1)}</td>
                 <td><span class="delta ${dScore.cls}">${dScore.text.replace(' vs mês anterior','')}</span></td>
                 <td><span class="pill" style="background:${pillColor(r.grade)}">${r.grade}</span></td>
