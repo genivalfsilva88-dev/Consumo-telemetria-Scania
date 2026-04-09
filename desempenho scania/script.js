@@ -578,7 +578,7 @@
             <div class="page-note">Página operacional para análise, auditoria e acompanhamento por equipamento</div>
           </div>
           <div class="fleet-detail-grid" id="fleetDetailGrid">
-            <div class="fleet-side">
+            <div class="fleet-top-grid">
               <section class="panel soft-accent">
                 <div class="panel-head">
                   <h3 class="panel-title" style="margin:0;">Maiores consumos em marcha lenta</h3>
@@ -603,6 +603,7 @@
       const tablePanel = document.getElementById('tableWrap')?.closest('.panel');
       const fleetGrid = document.getElementById('fleetDetailGrid');
       if (tablePanel && fleetGrid && tablePanel.parentElement !== fleetGrid) {
+        tablePanel.classList.add('fleet-table-panel');
         fleetGrid.appendChild(tablePanel);
       }
     }
