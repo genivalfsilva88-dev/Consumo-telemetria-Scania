@@ -392,30 +392,54 @@ export class DashboardUI {
   }
 
   _renderKPIs(summary, prevSummary) {
-    document.getElementById('kpiFrota').textContent = formatInt(summary.frota);
-    document.getElementById('kpiConsumo').textContent = formatNumber(summary.consumoMedio, 2);
-    document.getElementById('kpiDistancia').textContent = formatInt(summary.distanciaMedia);
-    document.getElementById('kpiKmTotal').textContent = formatInt(summary.totalKm);
-    document.getElementById('kpiCo2').textContent = formatNumber(summary.co2Total, 1);
-    document.getElementById('scoreNumber').textContent = formatNumber(summary.scoreMedio, 1);
-    document.getElementById('scoreLetter').textContent = summary.grade;
-    document.getElementById('scoreLetter').className = `score-letter ${gradeClass(summary.grade)}`;
-    
+    const kpiFrota = document.getElementById('kpiFrota');
+    const kpiConsumo = document.getElementById('kpiConsumo');
+    const kpiDistancia = document.getElementById('kpiDistancia');
+    const kpiKmTotal = document.getElementById('kpiKmTotal');
+    const kpiCo2 = document.getElementById('kpiCo2');
+    const scoreNumber = document.getElementById('scoreNumber');
+    const scoreLetter = document.getElementById('scoreLetter');
+
+    if (kpiFrota) kpiFrota.textContent = formatInt(summary.frota);
+    if (kpiConsumo) kpiConsumo.textContent = formatNumber(summary.consumoMedio, 2);
+    if (kpiDistancia) kpiDistancia.textContent = formatInt(summary.distanciaMedia);
+    if (kpiKmTotal) kpiKmTotal.textContent = formatInt(summary.totalKm);
+    if (kpiCo2) kpiCo2.textContent = formatNumber(summary.co2Total, 1);
+    if (scoreNumber) scoreNumber.textContent = formatNumber(summary.scoreMedio, 1);
+    if (scoreLetter) {
+      scoreLetter.textContent = summary.grade;
+      scoreLetter.className = `score-letter ${gradeClass(summary.grade)}`;
+    }
+
     // Meta progress
-    document.getElementById('realValue').textContent = `${formatNumber(summary.consumoMedio, 2)} km/l`;
-    document.getElementById('metaValue').textContent = summary.metaMedia ? `${formatNumber(summary.metaMedia, 2)} km/l` : 'Sem meta';
-    const perf = summary.metaMedia > 0 ? (summary.consumoMedio / summary.metaMedia) * 100 : 0;
-    document.getElementById('metaFill').style.width = `${Math.max(0, Math.min(perf, 100))}%`;
-    document.getElementById('metaText').textContent = summary.metaMedia > 0
-      ? `${perf >= 100 ? 'Meta atingida' : 'Abaixo da meta'} (${formatNumber(perf, 1)}%) • Scania Driver Support (%) ${formatNumber(summary.supportUsageMedio, 1)}%`
-      : `Sem meta cadastrada para comparação • Scania Driver Support (%) ${formatNumber(summary.supportUsageMedio, 1)}%`;
-    
+    const realValue = document.getElementById('realValue');
+    const metaValue = document.getElementById('metaValue');
+    const metaFill = document.getElementById('metaFill');
+    const metaText = document.getElementById('metaText');
+
+    if (realValue) realValue.textContent = `${formatNumber(summary.consumoMedio, 2)} km/l`;
+    if (metaValue) metaValue.textContent = summary.metaMedia ? `${formatNumber(summary.metaMedia, 2)} km/l` : 'Sem meta';
+    if (metaFill) {
+      const perf = summary.metaMedia > 0 ? (summary.consumoMedio / summary.metaMedia) * 100 : 0;
+      metaFill.style.width = `${Math.max(0, Math.min(perf, 100))}%`;
+    }
+    if (metaText) {
+      metaText.textContent = summary.metaMedia > 0
+        ? `${summary.consumoMedio >= summary.metaMedia ? 'Meta atingida' : 'Abaixo da meta'} (${formatNumber(summary.metaMedia > 0 ? (summary.consumoMedio / summary.metaMedia) * 100 : 0, 1)}%) • Scania Driver Support ${formatNumber(summary.supportUsageMedio, 1)}%`
+        : `Sem meta cadastrada • Scania Driver Support ${formatNumber(summary.supportUsageMedio, 1)}%`;
+    }
+
     // Indicators
-    document.getElementById('indMarcha').textContent = `${formatNumber(summary.marchaLenta, 1)}%`;
-    document.getElementById('indInercia').textContent = `${formatNumber(summary.inercia, 1)}%`;
-    document.getElementById('indExcesso').textContent = `${formatNumber(summary.excessoVelocidade, 1)}%`;
-    document.getElementById('indSupport').textContent = `${formatNumber(summary.supportUsageMedio, 1)}%`;
-    
+    const indMarcha = document.getElementById('indMarcha');
+    const indInercia = document.getElementById('indInercia');
+    const indExcesso = document.getElementById('indExcesso');
+    const indSupport = document.getElementById('indSupport');
+
+    if (indMarcha) indMarcha.textContent = `${formatNumber(summary.marchaLenta, 1)}%`;
+    if (indInercia) indInercia.textContent = `${formatNumber(summary.inercia, 1)}%`;
+    if (indExcesso) indExcesso.textContent = `${formatNumber(summary.excessoVelocidade, 1)}%`;
+    if (indSupport) indSupport.textContent = `${formatNumber(summary.supportUsageMedio, 1)}%`;
+
     // Deltas
     this._setDelta('deltaFrota', summary.frota, prevSummary.frota, true, '', 0);
     this._setDelta('deltaConsumo', summary.consumoMedio, prevSummary.consumoMedio, true, ' km/l', 2);
@@ -465,19 +489,31 @@ export class DashboardUI {
     const tagEl = document.getElementById(`decision${section}Tag`);
     const valueEl = document.getElementById(`decision${section}Value`);
     const footEl = document.getElementById(`decision${section}Foot`);
-    
-    if (card) card.className = `decision-card ${tone || 'neutral'}`;
-    if (tagEl) tagEl.textContent = tag;
-    if (valueEl) valueEl.textContent = value;
-    if (footEl) footEl.textContent = foot;
+
+    if (!card || !tagEl || !valueEl || !footEl) {
+      console.warn(`Decision card elements not found for section: ${section}`);
+      return;
+    }
+
+    // Sanitize and truncate long values
+    const safeValue = String(value || '-').substring(0, 50);
+    const safeFoot = String(foot || '').substring(0, 120);
+    const safeTag = String(tag || '').substring(0, 60);
+
+    card.className = `decision-card ${tone || 'neutral'}`;
+    tagEl.textContent = safeTag;
+    valueEl.textContent = safeValue;
+    footEl.textContent = safeFoot;
   }
 
   _renderComparisonPanel(month, current, previous, prevMonth) {
     const labelEl = document.getElementById('compareMonthLabel');
-    if (labelEl) labelEl.textContent = prevMonth ? `${month} x ${prevMonth}` : 'Sem mês anterior disponível';
-    
+    if (labelEl) labelEl.textContent = prevMonth ? `${month} vs ${prevMonth}` : 'Sem mês anterior disponível';
+
     const target = document.getElementById('compareStats');
-    if (!prevMonth || previous.frota === 0) {
+    if (!target) return;
+
+    if (!prevMonth || !previous || previous.frota === 0) {
       target.innerHTML = '<div class="empty">Sem base comparativa para o mês selecionado.</div>';
       return;
     }
@@ -493,9 +529,11 @@ export class DashboardUI {
     ];
 
     target.innerHTML = stats.map(([label, a, b, better, unit, digits]) => {
-      const d = deltaInfo(a, b, better, unit, digits);
+      const d = deltaInfo(a ?? 0, b ?? 0, better, unit, digits);
+      const aVal = a != null ? formatNumber(a, digits) : '-';
+      const bVal = b != null ? formatNumber(b, digits) : '-';
       return `<div class="compare-stat">
-        <div><strong>${label}</strong><div class="subtle">Atual: ${formatNumber(a, digits)}${unit} • Anterior: ${formatNumber(b, digits)}${unit}</div></div>
+        <div><strong>${label}</strong><div class="subtle">Atual: ${aVal}${unit} • Anterior: ${bVal}${unit}</div></div>
         <div class="delta ${d.cls}">${d.text}</div>
       </div>`;
     }).join('');
@@ -532,23 +570,25 @@ export class DashboardUI {
   }
 
   _renderActionCards(summary) {
-    document.getElementById('metaHitPct').textContent = `${formatNumber(summary.metaHitPct, 1)}%`;
-    document.getElementById('metaHitCount').textContent = `${formatInt(summary.metaHitCount)} de ${formatInt(summary.validMetaCount || summary.frota)} equip.`;
-    document.getElementById('savingsLiters').textContent = formatInt(summary.savingsLiters);
-    document.getElementById('savingsValueFoot').textContent = `Estimativa financeira: R$ ${formatMoney(summary.savingsValue)}`;
-    document.getElementById('criticalCount').textContent = formatInt(summary.criticalCount);
-    document.getElementById('criticalPct').textContent = `${formatNumber(summary.criticalPct, 1)}% da frota`;
-    document.getElementById('supportExecutive').textContent = `${formatNumber(summary.supportUsageMedio, 1)}%`;
-    document.getElementById('idleLiters').textContent = formatInt(summary.idleLiters);
-    document.getElementById('driversBelowMeta').textContent = formatInt(summary.driversBelowMetaCount);
-    document.getElementById('speedExecutive').textContent = `${formatNumber(summary.excessoVelocidade, 1)}%`;
-    document.getElementById('treesEquivalent').textContent = formatInt(summary.treesEquivalent);
-    
+    const setEl = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
+
+    setEl('metaHitPct', `${formatNumber(summary.metaHitPct, 1)}%`);
+    setEl('metaHitCount', `${formatInt(summary.metaHitCount)} de ${formatInt(summary.validMetaCount || summary.frota)} equip.`);
+    setEl('savingsLiters', formatInt(summary.savingsLiters));
+    setEl('savingsValueFoot', `Estimativa financeira: R$ ${formatMoney(summary.savingsValue)}`);
+    setEl('criticalCount', formatInt(summary.criticalCount));
+    setEl('criticalPct', `${formatNumber(summary.criticalPct, 1)}% da frota`);
+    setEl('supportExecutive', `${formatNumber(summary.supportUsageMedio, 1)}%`);
+    setEl('idleLiters', formatInt(summary.idleLiters));
+    setEl('driversBelowMeta', formatInt(summary.driversBelowMetaCount));
+    setEl('speedExecutive', `${formatNumber(summary.excessoVelocidade, 1)}%`);
+    setEl('treesEquivalent', formatInt(summary.treesEquivalent));
+
     // Deltas
     const prevMonth = this.previousLoadedMonth(state.selectedMonth);
     const prevRows = prevMonth ? this.getFilteredRows(prevMonth) : [];
     const prevSummary = computeMonthSummary(prevRows);
-    
+
     this._setDelta('deltaMetaHit', summary.metaHitPct, prevSummary.metaHitPct, true, ' p.p.', 1);
     this._setDelta('deltaSavings', summary.savingsLiters, prevSummary.savingsLiters, false, ' l', 0);
     this._setDelta('deltaCritical', summary.criticalCount, prevSummary.criticalCount, false, '', 0);
@@ -563,9 +603,14 @@ export class DashboardUI {
     const data = CONFIG.monthNames.map(month => {
       const rows = this.getFilteredRows(month);
       const s = computeMonthSummary(rows);
-      return { month, consumo: s.consumoMedio, meta: s.metaMedia, score: s.scoreMedio, frota: s.frota };
+      return { month, consumo: s.consumoMedio || 0, meta: s.metaMedia || 0, score: s.scoreMedio || 0, frota: s.frota || 0 };
     });
-    
+
+    const hasData = data.some(d => d.frota > 0);
+    if (!hasData) {
+      console.warn('No data available for trend chart');
+    }
+
     chartManager.renderTrendChart(data);
   }
 
@@ -714,14 +759,21 @@ export class DashboardUI {
     }).filter(v => v > 0);
 
     const forecast = forecastTrend(data, 2);
-    
+
     if (forecast.length === 0) {
       target.innerHTML = '<div class="empty">Dados insuficientes para projeção</div>';
       return;
     }
 
     const monthNames = CONFIG.monthNames;
-    const lastMonthIdx = this.getMonthsWithData().length - 1;
+    const loadedMonths = this.getMonthsWithData();
+    const lastMonthIdx = loadedMonths.length > 0 ? monthNames.indexOf(loadedMonths[loadedMonths.length - 1]) : -1;
+
+    if (lastMonthIdx < 0) {
+      target.innerHTML = '<div class="empty">Sem dados para projeção</div>';
+      return;
+    }
+
     const forecastMonths = forecast.map((_, i) => {
       const idx = (lastMonthIdx + i + 1) % 12;
       return monthNames[idx];
@@ -730,12 +782,12 @@ export class DashboardUI {
     target.innerHTML = `
       <div class="panel-head">
         <h3 class="panel-title" style="margin:0;">Projeção de tendência</h3>
-        <span class="subtle">Próximos 2 meses (estimativa)</span>
+        <span class="subtle">Próximos 2 meses (estimativa linear)</span>
       </div>
       <div class="executive-strip">
         ${forecast.map((f, i) => `
           <div class="exec-pill">
-            <div class="exec-label">${forecastMonths[i]}</div>
+            <div class="exec-label">${forecastMonths[i] || 'Mês ' + (i + 1)}</div>
             <div class="exec-value">${formatNumber(f.value, 2)} km/l</div>
             <div class="exec-foot">Consumo projetado</div>
           </div>

@@ -23,8 +23,22 @@ export class ChartManager {
    * Render trend chart
    */
   renderTrendChart(data) {
-    const filteredData = data.filter(item => item.frota > 0);
-    
+    if (!data || data.length === 0) {
+      console.warn('No data for trend chart');
+      return;
+    }
+
+    const filteredData = data.filter(item => item && item.frota > 0);
+
+    if (filteredData.length === 0) {
+      console.warn('No valid data points for trend chart');
+      const element = document.querySelector('#chartTrend');
+      if (element) {
+        element.innerHTML = '<div class="empty">Sem dados para exibir o gráfico de tendência</div>';
+      }
+      return;
+    }
+
     const options = {
       chart: {
         type: 'line',
@@ -33,13 +47,22 @@ export class ChartManager {
         zoom: { enabled: false }
       },
       series: [
-        { name: 'Consumo médio', data: filteredData.map(x => Number(x.consumo.toFixed(2))) },
-        { name: 'Meta média', data: filteredData.map(x => Number((x.meta || 0).toFixed(2))) },
-        { name: 'Nota média', data: filteredData.map(x => Number(x.score.toFixed(1))) }
+        {
+          name: 'Consumo médio',
+          data: filteredData.map(x => Number((x.consumo || 0).toFixed(2)))
+        },
+        {
+          name: 'Meta média',
+          data: filteredData.map(x => Number(((x.meta || 0)).toFixed(2)))
+        },
+        {
+          name: 'Nota média',
+          data: filteredData.map(x => Number((x.score || 0).toFixed(1)))
+        }
       ],
       stroke: { curve: 'smooth', width: [4, 2, 3], dashArray: [0, 6, 0] },
       colors: ['#2563eb', '#16a34a', '#d71920'],
-      xaxis: { categories: filteredData.map(x => x.month.slice(0, 3)) },
+      xaxis: { categories: filteredData.map(x => (x.month || '').slice(0, 3)) },
       yaxis: [
         { title: { text: 'km/l' } },
         { opposite: true, title: { text: 'Nota' } }

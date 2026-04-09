@@ -57,25 +57,57 @@ export function pillColor(letter) {
  * Compute summary for a set of rows
  */
 export function computeMonthSummary(rows) {
+  if (!rows || rows.length === 0) {
+    return {
+      frota: 0,
+      consumoMedio: 0,
+      distanciaMedia: 0,
+      totalKm: 0,
+      co2Total: 0,
+      scoreMedio: 0,
+      supportUsageMedio: 0,
+      metaMedia: 0,
+      metaHitPct: 0,
+      metaHitCount: 0,
+      validMetaCount: 0,
+      metaBelowCount: 0,
+      savingsLiters: 0,
+      savingsValue: 0,
+      criticalCount: 0,
+      criticalPct: 0,
+      grade: 'E',
+      idleLiters: 0,
+      treesEquivalent: 0,
+      idleAboveTargetCount: 0,
+      supportLowCount: 0,
+      speedAlertCount: 0,
+      driversBelowMetaCount: 0,
+      marchaLenta: 0,
+      inercia: 0,
+      excessoVelocidade: 0,
+      freadasBruscas: 0
+    };
+  }
+
   const validMetaRows = rows.filter(r => r.meta > 0);
   const metaHitRows = validMetaRows.filter(r => r.consumo >= r.meta);
   const belowMetaRows = validMetaRows.filter(r => r.consumo < r.meta);
   const idleAboveTargetRows = rows.filter(r => r.marchaLenta > 20);
   const supportLowRows = rows.filter(r => r.supportUsage < 60);
   const speedAlertRows = rows.filter(r => r.excessoVelocidade > 3);
-  
+
   const idleLiters = rows.reduce((acc, r) => {
     if (!(r.consumo > 0) || !(r.distancia > 0) || !(r.marchaLenta > 0)) return acc;
     return acc + ((r.distancia / r.consumo) * (r.marchaLenta / 100));
   }, 0);
-  
+
   const savingsLiters = validMetaRows.reduce((acc, r) => {
     if (!r.consumo || !r.meta || r.consumo >= r.meta) return acc;
     const atual = r.distancia > 0 ? r.distancia / r.consumo : 0;
     const alvo = r.distancia > 0 ? r.distancia / r.meta : 0;
     return acc + Math.max(0, atual - alvo);
   }, 0);
-  
+
   const criticalRows = rows.filter(r =>
     r.score < CONFIG.alerts.criticalScoreThreshold ||
     (r.meta > 0 && r.consumo < r.meta)
