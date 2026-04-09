@@ -31,6 +31,7 @@
     }
     function formatNumber(value, digits = 1) { return Number(value || 0).toLocaleString('pt-BR', { minimumFractionDigits: digits, maximumFractionDigits: digits }); }
     function formatInt(value) { return Number(value || 0).toLocaleString('pt-BR', { maximumFractionDigits: 0 }); }
+    function formatMoney(value) { return Number(value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }); }
     function gradeFromScore(score) { if (score >= 90) return 'A'; if (score >= 80) return 'B'; if (score >= 70) return 'C'; if (score >= 60) return 'D'; return 'E'; }
     function gradeClass(letter) { return `grade-${String(letter||'e').toLowerCase()}`; }
     function pillColor(letter) { return ({ A:'#16a34a', B:'#65a30d', C:'#ca8a04', D:'#ea580c', E:'#dc2626' })[letter] || '#64748b'; }
@@ -151,10 +152,19 @@
 
     function avg(arr, key) { return arr.length ? arr.reduce((s,i)=>s+(Number(i[key])||0),0) / arr.length : 0; }
     function sum(arr, key) { return arr.reduce((s,i)=>s+(Number(i[key])||0),0); }
+    function uniqueCount(arr, key) { return new Set(arr.map(item => item[key]).filter(Boolean)).size; }
 
     function computeMonthSummary(rows) {
       const validMetaRows = rows.filter(r => r.meta > 0);
       const metaHitRows = validMetaRows.filter(r => r.consumo >= r.meta);
+      const belowMetaRows = validMetaRows.filter(r => r.consumo < r.meta);
+      const idleAboveTargetRows = rows.filter(r => r.marchaLenta > 20);
+      const supportLowRows = rows.filter(r => r.supportUsage < 60);
+      const speedAlertRows = rows.filter(r => r.excessoVelocidade > 3);
+      const idleLiters = rows.reduce((acc, r) => {
+        if (!(r.consumo > 0) || !(r.distancia > 0) || !(r.marchaLenta > 0)) return acc;
+        return acc + ((r.distancia / r.consumo) * (r.marchaLenta / 100));
+      }, 0);
       const savingsLiters = validMetaRows.reduce((acc, r) => {
         if (!r.consumo || !r.meta || r.consumo >= r.meta) return acc;
         const atual = r.distancia > 0 ? r.distancia / r.consumo : 0;
@@ -174,11 +184,18 @@
         metaHitPct: validMetaRows.length ? (metaHitRows.length / validMetaRows.length) * 100 : 0,
         metaHitCount: metaHitRows.length,
         validMetaCount: validMetaRows.length,
+        metaBelowCount: belowMetaRows.length,
         savingsLiters,
         savingsValue: savingsLiters * 6,
         criticalCount: criticalRows.length,
         criticalPct: rows.length ? (criticalRows.length / rows.length) * 100 : 0,
         grade: gradeFromScore(avg(rows, 'score')),
+        idleLiters,
+        treesEquivalent: sum(rows, 'co2') * 6,
+        idleAboveTargetCount: idleAboveTargetRows.length,
+        supportLowCount: supportLowRows.length,
+        speedAlertCount: speedAlertRows.length,
+        driversBelowMetaCount: uniqueCount(belowMetaRows, 'motorista'),
         marchaLenta: avg(rows, 'marchaLenta'),
         inercia: avg(rows, 'inercia'),
         excessoVelocidade: avg(rows, 'excessoVelocidade'),
@@ -213,6 +230,107 @@
         });
       }
       return items.slice(0,4);
+    }
+
+    function summarizeDrivers(rows) {
+      const map = new Map();
+      rows.forEach(row => {
+        if (!map.has(row.motorista)) map.set(row.motorista, []);
+        map.get(row.motorista).push(row);
+      });
+      return Array.from(map.entries()).map(([motorista, items]) => {
+        const summary = computeMonthSummary(items);
+        const severity =
+          (summary.scoreMedio < 60 ? 2 : 0) +
+          (summary.metaMedia > 0 && summary.consumoMedio < summary.metaMedia ? 1 : 0) +
+          (summary.supportUsageMedio < 60 ? 1 : 0) +
+          (summary.marchaLenta > 20 ? 1 : 0);
+        return { motorista, items, summary, severity };
+      });
+    }
+
+    function computeStatusSummary(summary) {
+      if (summary.criticalPct >= 35 || summary.metaHitPct < 55 || summary.scoreMedio < 60) {
+        return {
+          tone: 'danger',
+          tag: 'Prioridade alta',
+          value: 'Ação imediata',
+          foot: `${formatInt(summary.criticalCount)} equipamentos críticos e ${formatNumber(summary.metaHitPct,1)}% da frota na meta.`
+        };
+      }
+      if (summary.criticalPct >= 20 || summary.metaHitPct < 70 || summary.scoreMedio < 70) {
+        return {
+          tone: 'warning',
+          tag: 'Atenção',
+          value: 'Em alerta',
+          foot: `Nota ${formatNumber(summary.scoreMedio,1)} e ${formatNumber(summary.metaHitPct,1)}% de aderência à meta.`
+        };
+      }
+      return {
+        tone: 'success',
+        tag: 'Operação saudável',
+        value: 'Controlada',
+        foot: `Nota ${formatNumber(summary.scoreMedio,1)} com ${formatInt(summary.metaHitCount)} equipamentos no alvo.`
+      };
+    }
+
+    function computePrimaryPressure(summary) {
+      const options = [
+        { count: summary.metaBelowCount, tone: 'danger', tag: 'Consumo', value: `${formatInt(summary.metaBelowCount)} equip.`, foot: 'Abaixo da meta de consumo no período.' },
+        { count: summary.idleAboveTargetCount, tone: 'danger', tag: 'Marcha lenta', value: `${formatInt(summary.idleAboveTargetCount)} equip.`, foot: 'Acima de 20% e pressionando litros desperdiçados.' },
+        { count: summary.supportLowCount, tone: 'warning', tag: 'Scania Driver Support (%)', value: `${formatInt(summary.supportLowCount)} equip.`, foot: 'Uso abaixo de 60% do suporte ao motorista.' },
+        { count: summary.speedAlertCount, tone: 'warning', tag: 'Excesso de velocidade', value: `${formatInt(summary.speedAlertCount)} equip.`, foot: 'Indicador elevado e com risco operacional.' }
+      ].sort((a, b) => b.count - a.count);
+      return options[0] && options[0].count > 0
+        ? options[0]
+        : { tone: 'success', tag: 'Sem pressão dominante', value: 'Controlado', foot: 'Nenhum vetor de perda se destacou no filtro atual.' };
+    }
+
+    function pickPriorityDriver(rows) {
+      const drivers = summarizeDrivers(rows)
+        .sort((a, b) => b.severity - a.severity || a.summary.scoreMedio - b.summary.scoreMedio || a.summary.consumoMedio - b.summary.consumoMedio);
+      return drivers[0] || null;
+    }
+
+    function setDecisionCard(section, tag, value, foot, tone) {
+      const card = document.getElementById(`decision${section}Card`);
+      const tagEl = document.getElementById(`decision${section}Tag`);
+      const valueEl = document.getElementById(`decision${section}Value`);
+      const footEl = document.getElementById(`decision${section}Foot`);
+      if (card) card.className = `decision-card ${tone || 'neutral'}`;
+      if (tagEl) tagEl.textContent = tag;
+      if (valueEl) valueEl.textContent = value;
+      if (footEl) footEl.textContent = foot;
+    }
+
+    function renderExecutiveBriefing(summary, rows) {
+      const status = computeStatusSummary(summary);
+      const pressure = computePrimaryPressure(summary);
+      const priorityDriver = pickPriorityDriver(rows);
+
+      setDecisionCard('Status', `Status • ${status.tag}`, status.value, status.foot, status.tone);
+      setDecisionCard('Risk', `Risco • ${pressure.tag}`, pressure.value, pressure.foot, pressure.tone);
+      setDecisionCard(
+        'Opportunity',
+        summary.savingsValue > 0 ? 'Oportunidade • Potencial financeiro' : 'Oportunidade • Custo sob controle',
+        summary.savingsValue > 0 ? `R$ ${formatMoney(summary.savingsValue)}` : 'Sem desvio relevante',
+        summary.savingsValue > 0
+          ? `${formatInt(summary.savingsLiters)} litros recuperáveis no mês filtrado.`
+          : 'No filtro atual, a meta de consumo não indica desperdício relevante.',
+        summary.savingsValue > 0 ? 'warning' : 'success'
+      );
+
+      if (priorityDriver) {
+        setDecisionCard(
+          'Driver',
+          priorityDriver.severity >= 3 ? 'Motorista • Ação prioritária' : 'Motorista • Maior atenção',
+          priorityDriver.motorista,
+          `Nota ${formatNumber(priorityDriver.summary.scoreMedio,1)} • Consumo ${formatNumber(priorityDriver.summary.consumoMedio,2)} km/l${priorityDriver.summary.metaMedia ? ` • Meta ${formatNumber(priorityDriver.summary.metaMedia,2)}` : ''}`,
+          priorityDriver.severity >= 3 ? 'danger' : 'warning'
+        );
+      } else {
+        setDecisionCard('Driver', 'Motorista • Sem recorte', 'Sem dados', 'Não há dados suficientes para priorizar um condutor.', 'neutral');
+      }
     }
 
     function getMonthsWithData() { return CONFIG.monthNames.filter(m => (state.monthData[m] || []).length > 0); }
@@ -310,15 +428,62 @@
       setDelta('deltaInercia', s.inercia, p.inercia, true, ' p.p.', 1);
       setDelta('deltaExcesso', s.excessoVelocidade, p.excessoVelocidade, false, ' p.p.', 1);
       setDelta('deltaSupport', s.supportUsageMedio, p.supportUsageMedio, true, ' p.p.', 1);
+      renderExecutiveBriefing(s, rows);
       document.getElementById('metaHitPct').textContent = `${formatNumber(s.metaHitPct,1)}%`;
       document.getElementById('metaHitCount').textContent = `${formatInt(s.metaHitCount)} de ${formatInt(s.validMetaCount || s.frota)} equip.`;
       document.getElementById('savingsLiters').textContent = formatInt(s.savingsLiters);
       document.getElementById('savingsValueFoot').textContent = `Estimativa financeira: R$ ${formatMoney(s.savingsValue)}`;
       document.getElementById('criticalCount').textContent = formatInt(s.criticalCount);
       document.getElementById('criticalPct').textContent = `${formatNumber(s.criticalPct,1)}% da frota`;
+      document.getElementById('supportExecutive').textContent = `${formatNumber(s.supportUsageMedio,1)}%`;
+      document.getElementById('idleLiters').textContent = formatInt(s.idleLiters);
+      document.getElementById('driversBelowMeta').textContent = formatInt(s.driversBelowMetaCount);
+      document.getElementById('speedExecutive').textContent = `${formatNumber(s.excessoVelocidade,1)}%`;
+      const supportCard = document.getElementById('supportExecutive')?.closest('.card');
+      if (supportCard) {
+        const supportLabel = supportCard.querySelector('.kpi-label');
+        const supportSub = supportCard.querySelector('.metric-sub');
+        const supportFoot = supportCard.querySelector('.kpi-foot');
+        const supportIcon = supportCard.querySelector('.iconbox');
+        if (supportLabel) supportLabel.textContent = 'Scania Driver Support (%)';
+        if (supportSub) supportSub.textContent = 'media';
+        if (supportFoot) supportFoot.textContent = 'Aderencia media ao suporte do motorista no periodo filtrado';
+        if (supportIcon) supportIcon.textContent = '🎛️';
+      }
+      const speedCard = document.getElementById('speedExecutive')?.closest('.card');
+      if (speedCard) {
+        const speedLabel = speedCard.querySelector('.kpi-label');
+        const speedSub = speedCard.querySelector('.metric-sub');
+        const speedFoot = speedCard.querySelector('.kpi-foot');
+        const speedIcon = speedCard.querySelector('.iconbox');
+        if (speedLabel) speedLabel.textContent = 'Excesso de velocidade';
+        if (speedSub) speedSub.textContent = 'medio';
+        if (speedFoot) speedFoot.textContent = 'Indicador mantido no painel como risco operacional e de seguranca';
+        if (speedIcon) speedIcon.textContent = '⚠️';
+      }
+      const idleTargetValue = document.getElementById('treesEquivalent');
+      if (idleTargetValue) {
+        idleTargetValue.textContent = formatInt(s.idleAboveTargetCount);
+        const idleCard = idleTargetValue.closest('.card');
+        if (idleCard) {
+          const idleLabel = idleCard.querySelector('.kpi-label');
+          const idleSub = idleCard.querySelector('.metric-sub');
+          const idleFoot = idleCard.querySelector('.kpi-foot');
+          const idleIcon = idleCard.querySelector('.iconbox');
+          if (idleLabel) idleLabel.textContent = 'Marcha lenta acima de 20%';
+          if (idleSub) idleSub.textContent = 'equip.';
+          if (idleFoot) idleFoot.textContent = 'Quantidade de equipamentos acima da meta operacional de marcha lenta';
+          if (idleIcon) idleIcon.textContent = '🚦';
+        }
+      }
       setDelta('deltaMetaHit', s.metaHitPct, p.metaHitPct, true, ' p.p.', 1);
       setDelta('deltaSavings', s.savingsLiters, p.savingsLiters, false, ' l', 0);
       setDelta('deltaCritical', s.criticalCount, p.criticalCount, false, '', 0);
+      setDelta('deltaSupportExecutive', s.supportUsageMedio, p.supportUsageMedio, true, ' p.p.', 1);
+      setDelta('deltaIdleLiters', s.idleLiters, p.idleLiters, false, ' l', 0);
+      setDelta('deltaTrees', s.idleAboveTargetCount, p.idleAboveTargetCount, false, '', 0);
+      setDelta('deltaDriversBelowMeta', s.driversBelowMetaCount, p.driversBelowMetaCount, false, '', 0);
+      setDelta('deltaSpeedExecutive', s.excessoVelocidade, p.excessoVelocidade, false, ' p.p.', 1);
       renderComparePanel(month, s, p, prevMonth);
       renderInsightsPanel(s, p, prevMonth);
     }

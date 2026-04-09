@@ -75,8 +75,8 @@
     .delta.up.bad, .delta.down.bad { background: rgba(220,38,38,.10); color: var(--danger); }
     .delta.flat { background: rgba(100,116,139,.12); color: var(--muted); }
     .panel-title { margin:0 0 14px; font-size: 16px; font-weight:900; }
-    .grid-analytics { display:grid; grid-template-columns: 1.25fr .9fr .85fr; gap:18px; align-items:stretch; }
-    .action-grid { display:grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap:16px; }
+    .grid-analytics { display:grid; grid-template-columns: 1.2fr .9fr; gap:18px; align-items:stretch; }
+    .action-grid { display:grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap:16px; }
     .action-card { min-height: 136px; }
     .stack-grid { display:grid; grid-template-columns: 1fr; gap:18px; align-items:start; }
     .ranking-grid { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:18px; align-items:start; }
@@ -267,8 +267,75 @@
       font-size: 12px;
       font-weight: 700;
     }
+    .decision-grid {
+      display:grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 16px;
+      margin-bottom: 2px;
+    }
+    .decision-card {
+      position: relative;
+      min-height: 150px;
+      padding: 18px;
+      border-radius: 24px;
+      background: linear-gradient(180deg, rgba(255,255,255,.98) 0%, rgba(244,247,253,.94) 100%);
+      border: 1px solid rgba(255,255,255,.78);
+      box-shadow: var(--card-shadow);
+      overflow: hidden;
+    }
+    .decision-card::before {
+      content: '';
+      position: absolute;
+      inset: 0 0 auto 0;
+      height: 4px;
+      background: linear-gradient(90deg, rgba(59,196,255,.95), rgba(37,99,235,.95), rgba(215,25,32,.9));
+    }
+    .decision-card.success::before { background: linear-gradient(90deg, #22c55e, #16a34a); }
+    .decision-card.warning::before { background: linear-gradient(90deg, #f59e0b, #f97316); }
+    .decision-card.danger::before { background: linear-gradient(90deg, #ef4444, #d71920); }
+    .decision-card.neutral::before { background: linear-gradient(90deg, #94a3b8, #64748b); }
+    .decision-card::after {
+      content: '';
+      position: absolute;
+      right: -24px;
+      bottom: -32px;
+      width: 112px;
+      height: 112px;
+      border-radius: 999px;
+      background: radial-gradient(circle, rgba(59,196,255,.16) 0%, rgba(59,196,255,0) 70%);
+    }
+    .decision-tag {
+      display:block;
+      position: relative;
+      z-index: 1;
+      font-size: 11px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 800;
+    }
+    .decision-value {
+      position: relative;
+      z-index: 1;
+      margin-top: 14px;
+      font-size: clamp(24px, 2.2vw, 36px);
+      line-height: .95;
+      letter-spacing: -.04em;
+      font-weight: 900;
+      max-width: 14ch;
+    }
+    .decision-foot {
+      position: relative;
+      z-index: 1;
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+      max-width: 38ch;
+    }
+    .insight-panel { min-height: auto; }
     .hero-banner {
-      display: grid;
+      display: none;
       grid-template-columns: minmax(0, 1.1fr) minmax(520px, .95fr);
       gap: 18px;
       margin-bottom: 18px;
@@ -426,7 +493,7 @@
       .toolbar { grid-template-columns: repeat(2, minmax(150px,1fr)); }
       .grid-analytics, .charts-grid, .compare-grid { grid-template-columns: 1fr; }
       .cards-grid { grid-template-columns: repeat(3, minmax(0,1fr)); }
-      .mini-grid, .action-grid, .hero-stats { grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .mini-grid, .action-grid, .hero-stats, .decision-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
       .stack-grid, .grid-analytics, .compare-grid, .fleet-top-grid { grid-template-columns: 1fr; }
     }
     @media (max-width: 760px) {
@@ -438,7 +505,7 @@
       .toolbar { grid-template-columns: 1fr; }
       .hero-copy { padding: 20px; }
       .hero-heading { font-size: 34px; }
-      .cards-grid, .mini-grid, .summary-panel, .action-grid, .hero-stats, .executive-strip { grid-template-columns: 1fr; }
+      .cards-grid, .mini-grid, .summary-panel, .action-grid, .hero-stats, .executive-strip, .decision-grid { grid-template-columns: 1fr; }
       .page-head { align-items:flex-start; }
       .statusbar { align-items:flex-start; }
       .month-chip { padding:8px 11px; }
@@ -502,6 +569,29 @@
         </div>
         <div class="page-note">KPIs, meta, comparativos e visão rápida para decisão</div>
       </div>
+
+    <div class="decision-grid">
+      <article class="decision-card neutral" id="decisionStatusCard">
+        <span class="decision-tag" id="decisionStatusTag">Status • Carregando</span>
+        <div class="decision-value" id="decisionStatusValue">-</div>
+        <div class="decision-foot" id="decisionStatusFoot">Resumo da situação geral da frota filtrada.</div>
+      </article>
+      <article class="decision-card neutral" id="decisionRiskCard">
+        <span class="decision-tag" id="decisionRiskTag">Risco • Carregando</span>
+        <div class="decision-value" id="decisionRiskValue">-</div>
+        <div class="decision-foot" id="decisionRiskFoot">Maior vetor de pressão operacional do período.</div>
+      </article>
+      <article class="decision-card neutral" id="decisionOpportunityCard">
+        <span class="decision-tag" id="decisionOpportunityTag">Oportunidade • Carregando</span>
+        <div class="decision-value" id="decisionOpportunityValue">-</div>
+        <div class="decision-foot" id="decisionOpportunityFoot">Maior frente de recuperação financeira.</div>
+      </article>
+      <article class="decision-card neutral" id="decisionDriverCard">
+        <span class="decision-tag" id="decisionDriverTag">Motorista • Carregando</span>
+        <div class="decision-value" id="decisionDriverValue">-</div>
+        <div class="decision-foot" id="decisionDriverFoot">Condutor com maior necessidade de acompanhamento.</div>
+      </article>
+    </div>
 
     <div class="hero-banner">
       <section class="hero-copy">
@@ -586,7 +676,7 @@
           </div>
         </section>
 
-        <section class="panel soft-accent">
+        <section class="panel soft-accent full-span insight-panel">
           <div class="panel-head">
             <h3 class="panel-title" style="margin:0;">Insights operacionais</h3>
             <span class="subtle">Ações prioritárias</span>
@@ -613,9 +703,14 @@
           <div class="delta flat" id="deltaCritical">— vs mês anterior</div>
           <div class="kpi-foot">Nota baixa ou desempenho abaixo da meta no período filtrado</div>
         </article>
+        <article class="card action-card">
+          <div class="kpi-top"><div class="kpi-meta"><div class="kpi-label">Scania Driver Support (%)</div><div class="metric-line"><div class="metric-big" id="supportExecutive">-</div><div class="metric-sub">mÃ©dia</div></div></div><div class="iconbox">ðŸŽ›ï¸</div></div>
+          <div class="delta flat" id="deltaSupportExecutive">â€” vs mÃªs anterior</div>
+          <div class="kpi-foot">AderÃªncia mÃ©dia ao suporte do motorista no perÃ­odo filtrado</div>
+        </article>
       </div>
 
-      <div class="action-grid" style="grid-template-columns: repeat(3, minmax(0, 1fr));">
+      <div class="action-grid">
         <article class="card action-card">
           <div class="kpi-top"><div class="kpi-meta"><div class="kpi-label">Consumo em marcha lenta</div><div class="metric-line"><div class="metric-big" id="idleLiters">-</div><div class="metric-sub">litros</div></div></div><div class="iconbox">⏳</div></div>
           <div class="delta flat" id="deltaIdleLiters">— vs mês anterior</div>
@@ -630,6 +725,11 @@
           <div class="kpi-top"><div class="kpi-meta"><div class="kpi-label">Motoristas abaixo da meta</div><div class="metric-line"><div class="metric-big" id="driversBelowMeta">-</div><div class="metric-sub">condutores</div></div></div><div class="iconbox">👨‍🏫</div></div>
           <div class="delta flat" id="deltaDriversBelowMeta">— vs mês anterior</div>
           <div class="kpi-foot">Motoristas com consumo abaixo da meta no mês selecionado</div>
+        </article>
+        <article class="card action-card">
+          <div class="kpi-top"><div class="kpi-meta"><div class="kpi-label">Excesso de velocidade</div><div class="metric-line"><div class="metric-big" id="speedExecutive">-</div><div class="metric-sub">mÃ©dio</div></div></div><div class="iconbox">âš ï¸</div></div>
+          <div class="delta flat" id="deltaSpeedExecutive">â€” vs mÃªs anterior</div>
+          <div class="kpi-foot">Indicador mantido no painel como risco operacional e de seguranÃ§a</div>
         </article>
       </div>
 
