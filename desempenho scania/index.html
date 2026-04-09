@@ -334,120 +334,13 @@
       max-width: 38ch;
     }
     .insight-panel { min-height: auto; }
-    .hero-banner {
-      display: none;
-      grid-template-columns: minmax(0, 1.1fr) minmax(520px, .95fr);
-      gap: 18px;
-      margin-bottom: 18px;
-    }
-    .hero-copy {
-      position: relative;
-      padding: 28px;
-      border-radius: 28px;
-      color: #fff;
-      background:
-        radial-gradient(circle at top right, rgba(59,196,255,.22), transparent 26%),
-        linear-gradient(135deg, #081d45 0%, #14376f 52%, #0d58b6 100%);
-      box-shadow: 0 28px 70px rgba(8, 21, 45, .14);
-      overflow: hidden;
-    }
-    .hero-copy::after {
-      content: '';
-      position: absolute;
-      width: 240px;
-      height: 240px;
-      right: -80px;
-      bottom: -120px;
-      border-radius: 999px;
-      background: rgba(255,255,255,.08);
-    }
-    .hero-kicker {
-      font-size: 11px;
-      letter-spacing: .16em;
-      text-transform: uppercase;
-      font-weight: 800;
-      color: rgba(255,255,255,.68);
-    }
-    .hero-heading {
-      margin: 10px 0 10px;
-      font-size: clamp(32px, 4vw, 52px);
-      line-height: .96;
-      letter-spacing: -.04em;
-      font-weight: 800;
-      max-width: 10ch;
-    }
-    .hero-note {
-      max-width: 58ch;
-      color: rgba(255,255,255,.78);
-      font-size: 14px;
-      line-height: 1.6;
-    }
-    .hero-stats {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px;
-      margin-top: 22px;
-      position: relative;
-      z-index: 1;
-    }
-    .hero-stat {
-      background: rgba(255,255,255,.08);
-      border: 1px solid rgba(255,255,255,.14);
-      border-radius: 18px;
-      padding: 14px 16px;
-      backdrop-filter: blur(16px);
-    }
-    .hero-stat-label {
-      display: block;
-      margin-bottom: 8px;
-      font-size: 11px;
-      letter-spacing: .08em;
-      text-transform: uppercase;
-      font-weight: 800;
-      color: rgba(255,255,255,.62);
-    }
-    .hero-stat-value {
-      font-size: 24px;
-      line-height: 1;
-      font-weight: 800;
-      letter-spacing: -.04em;
-    }
-    .hero-stat-foot {
-      margin-top: 6px;
-      font-size: 12px;
-      color: rgba(255,255,255,.72);
-    }
+    .hero-banner { display: none !important; }
     .fleet-detail-grid { display:grid; gap:18px; align-items:start; }
     .fleet-top-grid { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:18px; align-items:start; }
     .fleet-side { display:grid; gap:18px; }
     .fleet-table-panel { min-width: 0; }
     .fleet-table-panel .table-wrap { max-height: 820px; }
     #chartIdleImpact { min-height: 310px; }
-    .executive-strip {
-      grid-template-columns: repeat(2, minmax(0,1fr));
-      align-content: stretch;
-    }
-    .exec-pill {
-      min-height: 126px;
-      padding: 18px 18px 16px;
-      border-radius: 22px;
-      border-color: rgba(255,255,255,.8);
-      position: relative;
-      overflow: hidden;
-    }
-    .exec-pill::after {
-      content: '';
-      position: absolute;
-      inset: auto -18px -36px auto;
-      width: 110px;
-      height: 110px;
-      border-radius: 999px;
-      background: radial-gradient(circle, rgba(37,99,235,.12), transparent 68%);
-    }
-    .exec-value {
-      font-size: 24px;
-      letter-spacing: -.04em;
-    }
     .cards-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
     .card, .panel {
       background: linear-gradient(180deg, rgba(255,255,255,.96) 0%, rgba(255,255,255,.9) 100%);
@@ -487,14 +380,24 @@
     }
     .card:hover, .panel:hover { box-shadow: 0 28px 70px rgba(8, 21, 45, .14); }
 
+    /* Alert styles */
+    .alert-list { display:grid; gap:10px; }
+    .alert-item { display:flex; gap:12px; align-items:flex-start; padding:12px 14px; border-radius:14px; background:rgba(248,250,252,.7); }
+    .alert-item.high { background:rgba(220,38,38,.08); border:1px solid rgba(220,38,38,.2); }
+    .alert-item.medium { background:rgba(245,158,11,.08); border:1px solid rgba(245,158,11,.2); }
+    .alert-item.low { background:rgba(37,99,235,.06); border:1px solid rgba(37,99,235,.15); }
+    .alert-item.success { background:rgba(22,163,74,.08); border:1px solid rgba(22,163,74,.2); }
+    .alert-icon { width:28px; height:28px; display:grid; place-items:center; border-radius:999px; background:#e8eef8; font-size:15px; flex:0 0 auto; }
+    .alert-sub { font-size:12px; color:var(--muted); margin-top:4px; }
+
     @media (max-width: 1240px) {
-      .hero-banner,
       .topbar-inner { grid-template-columns: 1fr; }
       .toolbar { grid-template-columns: repeat(2, minmax(150px,1fr)); }
       .grid-analytics, .charts-grid, .compare-grid { grid-template-columns: 1fr; }
       .cards-grid { grid-template-columns: repeat(3, minmax(0,1fr)); }
-      .mini-grid, .action-grid, .hero-stats, .decision-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .mini-grid, .action-grid, .decision-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
       .stack-grid, .grid-analytics, .compare-grid, .fleet-top-grid { grid-template-columns: 1fr; }
+      #pageExecutive > section:nth-child(3) > div:nth-child(2) { grid-template-columns: repeat(2, minmax(0,1fr)); }
     }
     @media (max-width: 760px) {
       .container { padding: 14px 12px 28px; }
@@ -503,9 +406,7 @@
       .brand img { width: 110px; }
       .topnav { display:grid; grid-template-columns: 1fr; }
       .toolbar { grid-template-columns: 1fr; }
-      .hero-copy { padding: 20px; }
-      .hero-heading { font-size: 34px; }
-      .cards-grid, .mini-grid, .summary-panel, .action-grid, .hero-stats, .executive-strip, .decision-grid { grid-template-columns: 1fr; }
+      .cards-grid, .mini-grid, .summary-panel, .action-grid, .decision-grid { grid-template-columns: 1fr; }
       .page-head { align-items:flex-start; }
       .statusbar { align-items:flex-start; }
       .month-chip { padding:8px 11px; }
@@ -513,6 +414,8 @@
       .kpi-value { font-size: 30px; }
       .score-letter { font-size: 42px; }
       th, td { padding: 10px 8px; }
+      #pageExecutive > section:nth-child(3) > div:nth-child(2),
+      #pageExecutive > section:nth-child(4) > div { grid-template-columns: 1fr; }
     }
     @media print {
       .topbar, .statusbar .available-months, #refreshBtn, #pdfBtn { display:none !important; }
@@ -539,26 +442,33 @@
           <button class="nav-pill" id="navFleet" data-page="fleet">Detalhamento da frota</button>
         </div>
       </div>
-      <div class="toolbar">
+      <div class="toolbar" role="toolbar" aria-label="Controles do dashboard">
         <div class="control-wrap">
-          <span class="control-label">Mês</span>
-          <select class="control" id="monthSelect"></select>
+          <span class="control-label" id="monthLabel">Mês</span>
+          <select class="control" id="monthSelect" aria-labelledby="monthLabel"></select>
         </div>
         <div class="control-wrap">
-          <span class="control-label">Motorista</span>
-          <select class="control" id="driverSelect"></select>
+          <span class="control-label" id="driverLabel">Motorista</span>
+          <select class="control" id="driverSelect" aria-labelledby="driverLabel"></select>
         </div>
-        <button class="button" id="refreshBtn">Atualizar</button>
-        <button class="button primary" id="pdfBtn">Exportar PDF</button>
+        <div class="control-wrap">
+          <span class="control-label" id="fleetLabel">Equipamento</span>
+          <select class="control" id="fleetSelect" aria-labelledby="fleetLabel"></select>
+        </div>
+        <button class="button" id="refreshBtn" aria-label="Atualizar dados">Atualizar</button>
+        <button class="button" id="csvBtn" aria-label="Exportar para CSV">CSV</button>
+        <button class="button" id="reportBtn" aria-label="Exportar relatório">Relatório</button>
+        <button class="button primary" id="pdfBtn" aria-label="Exportar para PDF">Exportar PDF</button>
       </div>
     </div>
   </div>
 
   <main class="container">
     <div class="statusbar">
-      <div class="badge"><span class="badge-dot"></span><span id="baseStatus">Base: Google Sheets publicado</span></div>
-      <div class="available-months" id="availableMonths"></div>
-      <div class="badge" id="lastUpdateBadge">Carregando base...</div>
+      <div class="badge" role="status"><span class="badge-dot"></span><span id="baseStatus">Base: Google Sheets publicado</span></div>
+      <div class="badge" id="cacheStatus" role="status" style="display:none;"></div>
+      <div class="available-months" id="availableMonths" role="group" aria-label="Meses disponíveis"></div>
+      <div class="badge" id="lastUpdateBadge" role="status">Carregando base...</div>
     </div>
 
     <section class="page-section active" id="pageExecutive">
@@ -569,6 +479,50 @@
         </div>
         <div class="page-note">KPIs, meta, comparativos e visão rápida para decisão</div>
       </div>
+
+      <!-- Alertas Automatizados -->
+      <section class="panel soft-accent full-span" style="margin-bottom:18px;" aria-label="Alertas automatizados">
+        <div class="panel-head">
+          <h3 class="panel-title" style="margin:0;">⚡ Alertas operacionais</h3>
+          <span class="subtle">Ações prioritárias automáticas</span>
+        </div>
+        <div class="alert-list" id="alertsList">
+          <div class="empty">Carregando alertas...</div>
+        </div>
+      </section>
+
+      <!-- Filtros Avançados -->
+      <section class="panel" style="margin-bottom:18px;" aria-label="Filtros avançados">
+        <div class="panel-head">
+          <h3 class="panel-title" style="margin:0;">🔍 Filtros avançados</h3>
+          <button class="button" id="clearFiltersBtn" style="height:32px; font-size:11px; padding:0 12px;">Limpar filtros</button>
+        </div>
+        <div style="display:grid; grid-template-columns: repeat(5, minmax(0,1fr)); gap:12px; align-items:end;">
+          <div class="control-wrap">
+            <span class="control-label">Consumo mín (km/l)</span>
+            <input type="number" class="control" id="filterMinConsumption" placeholder="Ex: 2.5" step="0.1" style="height:40px;" />
+          </div>
+          <div class="control-wrap">
+            <span class="control-label">Consumo máx (km/l)</span>
+            <input type="number" class="control" id="filterMaxConsumption" placeholder="Ex: 4.0" step="0.1" style="height:40px;" />
+          </div>
+          <div class="control-wrap">
+            <span class="control-label">Nota mín</span>
+            <input type="number" class="control" id="filterMinScore" placeholder="Ex: 70" min="0" max="100" style="height:40px;" />
+          </div>
+          <div class="control-wrap">
+            <span class="control-label">Nota máx</span>
+            <input type="number" class="control" id="filterMaxScore" placeholder="Ex: 90" min="0" max="100" style="height:40px;" />
+          </div>
+          <div class="control-wrap">
+            <span class="control-label">Nº Equipamento</span>
+            <input type="text" class="control" id="filterFleetNumber" placeholder="Ex: 1234" style="height:40px;" />
+          </div>
+        </div>
+        <div style="margin-top:12px; text-align:right;">
+          <button class="button primary" id="applyFiltersBtn" style="height:38px; padding:0 18px;">Aplicar filtros</button>
+        </div>
+      </section>
 
     <div class="decision-grid">
       <article class="decision-card neutral" id="decisionStatusCard">
@@ -743,6 +697,11 @@
         </section>
       </div>
 
+      <!-- Projeção de Tendência -->
+      <section class="panel" id="forecastPanel" style="margin-top:18px;">
+        <div class="empty">Carregando projeção...</div>
+      </section>
+
       </section>
     </section>
 
@@ -848,6 +807,26 @@
   </main>
 
   <script>window.formatMoney = window.formatMoney || function(v){return Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0});};</script>
-  <script src="./script.js"></script>
+  <script type="module">
+    import { CONFIG, state } from './js/config.js';
+    import { dashboardUI } from './js/ui-renderer.js';
+
+    // Logo
+    document.getElementById('logoImg').src = CONFIG.logoSrc || CONFIG.logoDataUrl;
+
+    // Event listeners
+    document.getElementById('refreshBtn').addEventListener('click', () => dashboardUI.refresh());
+    document.getElementById('pdfBtn').addEventListener('click', () => window.print());
+
+    // Initialize
+    window.addEventListener('load', () => {
+      dashboardUI.init();
+    });
+
+    // Expose for debugging
+    window.dashboardUI = dashboardUI;
+    window.CONFIG = CONFIG;
+    window.state = state;
+  </script>
 </body>
 </html>
