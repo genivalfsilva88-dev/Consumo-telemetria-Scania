@@ -54,17 +54,12 @@
       if (!(inercia >= 0)) return null;
       return clamp(inercia);
     }
-    function computeSpeedScore(excessoVelocidade) {
-      if (!(excessoVelocidade >= 0)) return null;
-      return clamp(100 - (excessoVelocidade * 5));
-    }
-    function computeDriverNote({ consumo, meta, supportUsage, marchaLenta, inercia, excessoVelocidade }) {
+    function computeDriverNote({ consumo, meta, supportUsage, marchaLenta, inercia }) {
       const components = [
         computeConsumptionScore(consumo, meta),
         clamp(supportUsage),
         computeIdleScore(marchaLenta),
-        computeInertiaScore(inercia),
-        computeSpeedScore(excessoVelocidade)
+        computeInertiaScore(inercia)
       ].filter(v => v != null);
       return components.length ? avg(components.map(v => ({ value: v })), 'value') : 0;
     }
@@ -129,8 +124,7 @@
           meta: metaInfo.meta || 0,
           supportUsage,
           marchaLenta,
-          inercia: inerciaValue,
-          excessoVelocidade
+          inercia: inerciaValue
         });
         return {
           equipamento,
@@ -301,7 +295,7 @@
       document.getElementById('metaValue').textContent = s.metaMedia ? `${formatNumber(s.metaMedia, 2)} km/l` : 'Sem meta';
       const perf = s.metaMedia > 0 ? (s.consumoMedio / s.metaMedia) * 100 : 0;
       document.getElementById('metaFill').style.width = `${Math.max(0, Math.min(perf, 100))}%`;
-      document.getElementById('metaText').textContent = s.metaMedia > 0 ? `${perf >= 100 ? 'Meta atingida' : 'Abaixo da meta'} (${formatNumber(perf, 1)}%) • Suporte do motorista ${formatNumber(s.supportUsageMedio,1)}%` : `Sem meta cadastrada para comparação • Suporte do motorista ${formatNumber(s.supportUsageMedio,1)}%`;
+      document.getElementById('metaText').textContent = s.metaMedia > 0 ? `${perf >= 100 ? 'Meta atingida' : 'Abaixo da meta'} (${formatNumber(perf, 1)}%) • Scania Driver Support (%) ${formatNumber(s.supportUsageMedio,1)}%` : `Sem meta cadastrada para comparação • Scania Driver Support (%) ${formatNumber(s.supportUsageMedio,1)}%`;
       document.getElementById('indMarcha').textContent = `${formatNumber(s.marchaLenta, 1)}%`;
       document.getElementById('indInercia').textContent = `${formatNumber(s.inercia, 1)}%`;
       document.getElementById('indExcesso').textContent = `${formatNumber(s.excessoVelocidade, 1)}%`;
@@ -336,7 +330,7 @@
       const stats = [
         ['Consumo médio', current.consumoMedio, previous.consumoMedio, true, ' km/l', 2],
         ['Nota média', current.scoreMedio, previous.scoreMedio, true, ' pts', 1],
-        ['Suporte do motorista', current.supportUsageMedio, previous.supportUsageMedio, true, ' %', 1],
+        ['Scania Driver Support (%)', current.supportUsageMedio, previous.supportUsageMedio, true, ' %', 1],
         ['Marcha lenta', current.marchaLenta, previous.marchaLenta, false, ' p.p.', 1],
         ['Excesso de velocidade', current.excessoVelocidade, previous.excessoVelocidade, false, ' p.p.', 1],
         ['Km total rodado', current.totalKm, previous.totalKm, true, ' km', 0],
@@ -448,7 +442,7 @@
       });
       return Array.from(byDriver.entries()).map(([motorista, items]) => {
         const s = computeMonthSummary(items);
-        const severity = (s.scoreMedio < 60 ? 2 : 0) + (s.metaMedia > 0 && s.consumoMedio < s.metaMedia ? 1 : 0) + (s.supportUsageMedio < 60 ? 1 : 0) + (s.marchaLenta > 20 ? 1 : 0) + (s.excessoVelocidade > 5 ? 1 : 0);
+        const severity = (s.scoreMedio < 60 ? 2 : 0) + (s.metaMedia > 0 && s.consumoMedio < s.metaMedia ? 1 : 0) + (s.supportUsageMedio < 60 ? 1 : 0) + (s.marchaLenta > 20 ? 1 : 0);
         return {
           motorista,
           equipamentos: items.map(i => i.equipamento).join(', '),
@@ -471,7 +465,7 @@
         <div class="list-item">
           <div>
             <strong>${item.motorista}</strong>
-            <span class="list-sub">Frotas: ${item.equipamentos} • Nota ${formatNumber(item.score,1)} • Suporte ${formatNumber(item.supportUsage,1)}% • Consumo ${formatNumber(item.consumo,2)} km/l${item.meta ? ` • Meta ${formatNumber(item.meta,2)}` : ''}</span>
+            <span class="list-sub">Frotas: ${item.equipamentos} • Nota ${formatNumber(item.score,1)} • Scania Driver Support (%) ${formatNumber(item.supportUsage,1)}% • Consumo ${formatNumber(item.consumo,2)} km/l${item.meta ? ` • Meta ${formatNumber(item.meta,2)}` : ''}</span>
           </div>
           <span class="training-level ${item.cls}">${item.label}</span>
         </div>`).join('');
@@ -501,8 +495,8 @@
         const worst = ranking.slice(-5).reverse();
         const html = ranking.length ? `
           <div class="summary-panel">
-              <div class="summary-box tall"><div class="subtle">Top motoristas do mês</div><div class="list">${best.map(r => `<div class="list-item"><div><strong>${r.motorista}</strong><span class="list-sub">Nota ${formatNumber(r.score,1)} • Suporte ${formatNumber(r.supportUsage,1)}% • Consumo ${formatNumber(r.consumo,2)} km/l${r.meta ? ` • Meta ${formatNumber(r.meta,2)}` : ''}</span></div><span class="training-level lvl-low">destaque</span></div>`).join('')}</div></div>
-              <div class="summary-box tall"><div class="subtle">Condutores para ação imediata</div><div class="list">${worst.map(r => `<div class="list-item"><div><strong>${r.motorista}</strong><span class="list-sub">Nota ${formatNumber(r.score,1)} • Suporte ${formatNumber(r.supportUsage,1)}% • Consumo ${formatNumber(r.consumo,2)} km/l${r.meta ? ` • Meta ${formatNumber(r.meta,2)}` : ''}</span></div><span class="training-level lvl-high">prioridade</span></div>`).join('')}</div></div>
+              <div class="summary-box tall"><div class="subtle">Top motoristas do mês</div><div class="list">${best.map(r => `<div class="list-item"><div><strong>${r.motorista}</strong><span class="list-sub">Nota ${formatNumber(r.score,1)} • Scania Driver Support (%) ${formatNumber(r.supportUsage,1)}% • Consumo ${formatNumber(r.consumo,2)} km/l${r.meta ? ` • Meta ${formatNumber(r.meta,2)}` : ''}</span></div><span class="training-level lvl-low">destaque</span></div>`).join('')}</div></div>
+              <div class="summary-box tall"><div class="subtle">Condutores para ação imediata</div><div class="list">${worst.map(r => `<div class="list-item"><div><strong>${r.motorista}</strong><span class="list-sub">Nota ${formatNumber(r.score,1)} • Scania Driver Support (%) ${formatNumber(r.supportUsage,1)}% • Consumo ${formatNumber(r.consumo,2)} km/l${r.meta ? ` • Meta ${formatNumber(r.meta,2)}` : ''}</span></div><span class="training-level lvl-high">prioridade</span></div>`).join('')}</div></div>
           </div>` : emptyHtml;
         targets.forEach(([titleId, boxId]) => {
           const title = document.getElementById(titleId);
@@ -523,7 +517,7 @@
         <div class="summary-panel">
           <div class="summary-box"><div class="subtle">Equipamentos</div><div class="score-number">${formatInt(rows.length)}</div><div class="subtle">Frotas analisadas no mês</div></div>
           <div class="summary-box"><div class="subtle">Nota média</div><div class="score-number">${formatNumber(s.scoreMedio,1)}</div><div class="delta ${scoreDelta.cls}">${scoreDelta.text}</div></div>
-          <div class="summary-box"><div class="subtle">Consumo</div><div class="score-number">${formatNumber(s.consumoMedio,2)}</div><div class="subtle">km/l ${s.metaMedia ? `• meta ${formatNumber(s.metaMedia,2)}` : ''}<br>Suporte do motorista: <strong>${formatNumber(s.supportUsageMedio,1)}%</strong></div></div>
+          <div class="summary-box"><div class="subtle">Consumo</div><div class="score-number">${formatNumber(s.consumoMedio,2)}</div><div class="subtle">km/l ${s.metaMedia ? `• meta ${formatNumber(s.metaMedia,2)}` : ''}<br>Scania Driver Support (%): <strong>${formatNumber(s.supportUsageMedio,1)}%</strong></div></div>
           <div class="summary-box"><div class="subtle">Pontos de atenção</div><div class="subtle" style="margin-top:10px; line-height:1.7;">Marcha lenta: <strong>${formatNumber(s.marchaLenta,1)}%</strong><br>Inércia: <strong>${formatNumber(s.inercia,1)}%</strong><br>Excesso vel.: <strong>${formatNumber(s.excessoVelocidade,1)}%</strong></div></div>
         </div>`;
       targets.forEach(([titleId, boxId]) => {
@@ -533,26 +527,6 @@
         title.textContent = state.selectedDriver;
         box.innerHTML = html;
       });
-    }
-
-    function renderDriverSummary(month) {
-      const box = document.getElementById('driverSummaryBox');
-      const title = document.getElementById('driverSummaryTitle');
-      const rows = getFilteredRows(month);
-      if (state.selectedDriver === 'TODOS') {
-        title.textContent = 'Todos os motoristas';
-        box.innerHTML = '<div class="empty">Selecione um motorista no filtro para ver a análise individual e identificar necessidade de treinamento.</div>';
-        return;
-      }
-      const s = computeMonthSummary(rows);
-      title.textContent = state.selectedDriver;
-      box.innerHTML = `
-        <div class="summary-panel">
-          <div class="summary-box"><div class="subtle">Equipamentos</div><div class="score-number">${formatInt(rows.length)}</div><div class="subtle">Frotas analisadas no mês</div></div>
-          <div class="summary-box"><div class="subtle">Score médio</div><div class="score-number">${formatNumber(s.scoreMedio,1)}</div><div class="delta ${deltaInfo(s.scoreMedio, computeMonthSummary(previousLoadedMonth(month) ? getFilteredRows(previousLoadedMonth(month)) : []).scoreMedio, true, ' pts', 1).cls}">${deltaInfo(s.scoreMedio, computeMonthSummary(previousLoadedMonth(month) ? getFilteredRows(previousLoadedMonth(month)) : []).scoreMedio, true, ' pts', 1).text}</div></div>
-          <div class="summary-box"><div class="subtle">Consumo</div><div class="score-number">${formatNumber(s.consumoMedio,2)}</div><div class="subtle">km/l ${s.metaMedia ? `• meta ${formatNumber(s.metaMedia,2)}` : ''}</div></div>
-          <div class="summary-box"><div class="subtle">Pontos de atenção</div><div class="subtle" style="margin-top:10px; line-height:1.7;">Marcha lenta: <strong>${formatNumber(s.marchaLenta,1)}%</strong><br>Excesso vel.: <strong>${formatNumber(s.excessoVelocidade,1)}%</strong><br>Freadas: <strong>${formatNumber(s.freadasBruscas,2)}</strong></div></div>
-        </div>`;
     }
 
     function renderDriverSummary(month) {
@@ -703,7 +677,7 @@
         <table>
           <thead>
             <tr>
-              <th>Equipamento</th><th>Placa</th><th>Motorista</th><th>Meta</th><th>Consumo</th><th>Δ Consumo</th><th>Suporte</th><th>Nota</th><th>Δ Nota</th><th>Faixa</th><th>Distância</th><th>Marcha lenta</th><th>Inércia</th><th>Excesso vel.</th><th>Freadas</th><th>CO₂</th>
+              <th>Equipamento</th><th>Placa</th><th>Motorista</th><th>Meta</th><th>Consumo</th><th>Δ Consumo</th><th>Scania Driver Support (%)</th><th>Nota</th><th>Δ Nota</th><th>Faixa</th><th>Distância</th><th>Marcha lenta</th><th>Inércia</th><th>Excesso vel.</th><th>Freadas</th><th>CO₂</th>
             </tr>
           </thead>
           <tbody>
