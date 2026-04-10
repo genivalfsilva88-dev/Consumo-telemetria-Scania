@@ -278,8 +278,10 @@ export function normalizeMonthRows(rows) {
     ]);
 
     const consumo = parseNumber(row['Consumo de combustível (km/l)']);
-    const inercia = parseNumber(row['Veículo engrenado sem injeção de combustível (%)']) ||
-                    parseNumber(row['VeÃ­culo engrenado sem injeÃ§Ã£o de combustÃ­vel (%)']) || 0;
+    const inercia = firstNumber(row, [
+      'Veículo engrenado sem injeção de combustível (%)',
+      'Veiculo engrenado sem injecao de combustivel (%)'
+    ]);
     const marchaLenta = parseNumber(row['Marcha lenta (%)']);
     const excessoVelocidade = parseNumber(row['Excesso de velocidade (%)']);
     

@@ -34,7 +34,7 @@ export class ChartManager {
       console.warn('No valid data points for trend chart');
       const element = document.querySelector('#chartTrend');
       if (element) {
-        element.innerHTML = '<div class="empty">Sem dados para exibir o gráfico de tendência</div>';
+        element.innerHTML = '<div class="empty">Sem dados para exibir o grafico de tendencia</div>';
       }
       return;
     }
@@ -48,15 +48,15 @@ export class ChartManager {
       },
       series: [
         {
-          name: 'Consumo médio',
+          name: 'Consumo medio',
           data: filteredData.map(x => Number((x.consumo || 0).toFixed(2)))
         },
         {
-          name: 'Meta média',
+          name: 'Meta media',
           data: filteredData.map(x => Number(((x.meta || 0)).toFixed(2)))
         },
         {
-          name: 'Nota média',
+          name: 'Nota media',
           data: filteredData.map(x => Number((x.score || 0).toFixed(1)))
         }
       ],
@@ -97,7 +97,7 @@ export class ChartManager {
         custom: ({ dataPointIndex }) => {
           const row = bestRows[dataPointIndex];
           if (!row) return '';
-          return `<div style="padding:10px 12px;min-width:210px"><strong>Equip. #${row.equipamento}</strong><br><span style="color:#475569">${row.motorista || '-'} • ${row.placa || '-'}</span><br><span style="color:#0f172a">Consumo: <strong>${formatNumber(row.consumo, 2)} km/l</strong></span></div>`;
+          return `<div style="padding:10px 12px;min-width:210px"><strong>Equip. #${row.equipamento}</strong><br><span style="color:#475569">${row.motorista || '-'} - ${row.placa || '-'}</span><br><span style="color:#0f172a">Consumo: <strong>${formatNumber(row.consumo, 2)} km/l</strong></span></div>`;
         }
       }
     });
@@ -112,7 +112,7 @@ export class ChartManager {
         custom: ({ dataPointIndex }) => {
           const row = worstRows[dataPointIndex];
           if (!row) return '';
-          return `<div style="padding:10px 12px;min-width:210px"><strong>Equip. #${row.equipamento}</strong><br><span style="color:#475569">${row.motorista || '-'} • ${row.placa || '-'}</span><br><span style="color:#0f172a">Consumo: <strong>${formatNumber(row.consumo, 2)} km/l</strong></span></div>`;
+          return `<div style="padding:10px 12px;min-width:210px"><strong>Equip. #${row.equipamento}</strong><br><span style="color:#475569">${row.motorista || '-'} - ${row.placa || '-'}</span><br><span style="color:#0f172a">Consumo: <strong>${formatNumber(row.consumo, 2)} km/l</strong></span></div>`;
         }
       }
     });
@@ -169,7 +169,7 @@ export class ChartManager {
         y: {
           formatter: (_, ctx) => {
             const item = sortedRows[ctx.dataPointIndex];
-            return `${formatNumber(item.idleImpact, 1)} L • ${item.motorista} • placa ${item.placa} • ${formatNumber(item.marchaLenta, 1)}%`;
+            return `${formatNumber(item.idleImpact, 1)} L - ${item.motorista} - placa ${item.placa} - ${formatNumber(item.marchaLenta, 1)}%`;
           }
         }
       }

@@ -27,7 +27,7 @@
       --radius: 22px;
     }
     * { box-sizing: border-box; }
-    html, body { margin: 0; font-family: Inter, Arial, Helvetica, sans-serif; background: radial-gradient(circle at top, #f6f9fd 0%, var(--bg) 45%, #eaf1f8 100%); color: var(--text); }
+    html, body { margin: 0; font-family: Manrope, Arial, Helvetica, sans-serif; background: radial-gradient(circle at top, #f6f9fd 0%, var(--bg) 45%, #eaf1f8 100%); color: var(--text); }
     body { min-width: 320px; }
     .topbar {
       position: sticky; top: 0; z-index: 40;
@@ -334,7 +334,6 @@
       max-width: 38ch;
     }
     .insight-panel { min-height: auto; }
-    .hero-banner { display: none !important; }
     .fleet-detail-grid { display:grid; gap:18px; align-items:start; }
     .fleet-top-grid { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:18px; align-items:start; }
     .fleet-side { display:grid; gap:18px; }
@@ -547,25 +546,6 @@
       </article>
     </div>
 
-    <div class="hero-banner">
-      <section class="hero-copy">
-        <span class="hero-kicker">Dashboard executivo</span>
-        <h2 class="hero-heading">Consumo, risco e resposta operacional em uma leitura.</h2>
-        <div class="hero-note">Painel mensal desenhado para destacar eficiência da frota, pressão sobre custo de diesel, comportamento de condução e equipamentos que pedem ação imediata.</div>
-        <div class="hero-stats">
-          <div class="hero-stat"><span class="hero-stat-label">Visão</span><div class="hero-stat-value">360°</div><div class="hero-stat-foot">Frota, motorista, nota e custo no mesmo fluxo.</div></div>
-          <div class="hero-stat"><span class="hero-stat-label">Decisão</span><div class="hero-stat-value">Mensal</div><div class="hero-stat-foot">Compare tendência, desvio e potencial de economia.</div></div>
-          <div class="hero-stat"><span class="hero-stat-label">Foco</span><div class="hero-stat-value">Ação</div><div class="hero-stat-foot">Treinamento e correção rápida onde o painel sinaliza perda.</div></div>
-        </div>
-      </section>
-      <div class="executive-strip">
-        <div class="exec-pill"><div class="exec-label">Leitura executiva</div><div class="exec-value">Decisão rápida</div><div class="exec-foot">KPIs, meta, risco e ação em um só nível.</div></div>
-        <div class="exec-pill"><div class="exec-label">Uso recomendado</div><div class="exec-value">Mensal</div><div class="exec-foot">Compare meses, motoristas e equipamentos críticos.</div></div>
-        <div class="exec-pill"><div class="exec-label">Ranking</div><div class="exec-value">Frota completa</div><div class="exec-foot">Top 10 e piores 10 sempre ignoram o filtro de motorista.</div></div>
-        <div class="exec-pill"><div class="exec-label">Foco operacional</div><div class="exec-value">Treinamento</div><div class="exec-foot">Use a lista crítica para plano de ação com motoristas.</div></div>
-      </div>
-    </div>
-
     <section class="layout">
       <div class="cards-grid">
         <article class="card">
@@ -643,47 +623,47 @@
 
       <div class="action-grid">
         <article class="card action-card">
-          <div class="kpi-top"><div class="kpi-meta"><div class="kpi-label">Meta atingida</div><div class="metric-line"><div class="metric-big" id="metaHitPct">-</div><div class="metric-sub" id="metaHitCount">-</div></div></div><div class="iconbox">🎯</div></div>
-          <div class="delta flat" id="deltaMetaHit">— vs mês anterior</div>
+          <div class="kpi-top"><div class="kpi-meta"><div class="kpi-label">Meta atingida</div><div class="metric-line"><div class="metric-big" id="metaHitPct">-</div><div class="metric-sub" id="metaHitCount">-</div></div></div><div class="iconbox">META</div></div>
+          <div class="delta flat" id="deltaMetaHit">- vs mes anterior</div>
           <div class="kpi-foot">Percentual da frota filtrada no ou acima do alvo de consumo</div>
         </article>
         <article class="card action-card">
-          <div class="kpi-top"><div class="kpi-meta"><div class="kpi-label">Potencial de economia</div><div class="metric-line"><div class="metric-big" id="savingsLiters">-</div><div class="metric-sub">litros</div></div></div><div class="iconbox">💰</div></div>
-          <div class="delta flat" id="deltaSavings">— vs mês anterior</div>
+          <div class="kpi-top"><div class="kpi-meta"><div class="kpi-label">Potencial de economia</div><div class="metric-line"><div class="metric-big" id="savingsLiters">-</div><div class="metric-sub">litros</div></div></div><div class="iconbox">R$</div></div>
+          <div class="delta flat" id="deltaSavings">- vs mes anterior</div>
           <div class="kpi-foot" id="savingsValueFoot">Estimativa financeira baseada em R$ 6,00 por litro</div>
         </article>
         <article class="card action-card">
-          <div class="kpi-top"><div class="kpi-meta"><div class="kpi-label">Equipamentos críticos</div><div class="metric-line"><div class="metric-big" id="criticalCount">-</div><div class="metric-sub" id="criticalPct">-</div></div></div><div class="iconbox">🚨</div></div>
-          <div class="delta flat" id="deltaCritical">— vs mês anterior</div>
-          <div class="kpi-foot">Nota baixa ou desempenho abaixo da meta no período filtrado</div>
+          <div class="kpi-top"><div class="kpi-meta"><div class="kpi-label">Equipamentos criticos</div><div class="metric-line"><div class="metric-big" id="criticalCount">-</div><div class="metric-sub" id="criticalPct">-</div></div></div><div class="iconbox">RISCO</div></div>
+          <div class="delta flat" id="deltaCritical">- vs mes anterior</div>
+          <div class="kpi-foot">Nota baixa ou desempenho abaixo da meta no periodo filtrado</div>
         </article>
         <article class="card action-card">
-          <div class="kpi-top"><div class="kpi-meta"><div class="kpi-label">Scania Driver Support (%)</div><div class="metric-line"><div class="metric-big" id="supportExecutive">-</div><div class="metric-sub">mÃ©dia</div></div></div><div class="iconbox">ðŸŽ›ï¸</div></div>
-          <div class="delta flat" id="deltaSupportExecutive">â€” vs mÃªs anterior</div>
-          <div class="kpi-foot">AderÃªncia mÃ©dia ao suporte do motorista no perÃ­odo filtrado</div>
+          <div class="kpi-top"><div class="kpi-meta"><div class="kpi-label">Scania Driver Support (%)</div><div class="metric-line"><div class="metric-big" id="supportExecutive">-</div><div class="metric-sub">media</div></div></div><div class="iconbox">SDS</div></div>
+          <div class="delta flat" id="deltaSupportExecutive">- vs mes anterior</div>
+          <div class="kpi-foot">Aderencia media ao suporte do motorista no periodo filtrado</div>
         </article>
       </div>
 
       <div class="action-grid">
         <article class="card action-card">
-          <div class="kpi-top"><div class="kpi-meta"><div class="kpi-label">Consumo em marcha lenta</div><div class="metric-line"><div class="metric-big" id="idleLiters">-</div><div class="metric-sub">litros</div></div></div><div class="iconbox">⏳</div></div>
-          <div class="delta flat" id="deltaIdleLiters">— vs mês anterior</div>
-          <div class="kpi-foot">Estimativa operacional baseada no % médio de marcha lenta</div>
+          <div class="kpi-top"><div class="kpi-meta"><div class="kpi-label">Consumo em marcha lenta</div><div class="metric-line"><div class="metric-big" id="idleLiters">-</div><div class="metric-sub">litros</div></div></div><div class="iconbox">LENTA</div></div>
+          <div class="delta flat" id="deltaIdleLiters">- vs mes anterior</div>
+          <div class="kpi-foot">Estimativa operacional baseada no percentual medio de marcha lenta</div>
         </article>
         <article class="card action-card">
-          <div class="kpi-top"><div class="kpi-meta"><div class="kpi-label">Árvores equivalentes</div><div class="metric-line"><div class="metric-big" id="treesEquivalent">-</div><div class="metric-sub">unid.</div></div></div><div class="iconbox">🌳</div></div>
-          <div class="delta flat" id="deltaTrees">— vs mês anterior</div>
-          <div class="kpi-foot">Equivalência estimada com base em 6 árvores por tonelada de CO₂</div>
+          <div class="kpi-top"><div class="kpi-meta"><div class="kpi-label">Marcha lenta acima de 20%</div><div class="metric-line"><div class="metric-big" id="idleAboveTarget">-</div><div class="metric-sub">equip.</div></div></div><div class="iconbox">ML</div></div>
+          <div class="delta flat" id="deltaIdleAboveTarget">- vs mes anterior</div>
+          <div class="kpi-foot">Quantidade de equipamentos acima da meta operacional de marcha lenta</div>
         </article>
         <article class="card action-card">
-          <div class="kpi-top"><div class="kpi-meta"><div class="kpi-label">Motoristas abaixo da meta</div><div class="metric-line"><div class="metric-big" id="driversBelowMeta">-</div><div class="metric-sub">condutores</div></div></div><div class="iconbox">👨‍🏫</div></div>
-          <div class="delta flat" id="deltaDriversBelowMeta">— vs mês anterior</div>
-          <div class="kpi-foot">Motoristas com consumo abaixo da meta no mês selecionado</div>
+          <div class="kpi-top"><div class="kpi-meta"><div class="kpi-label">Motoristas abaixo da meta</div><div class="metric-line"><div class="metric-big" id="driversBelowMeta">-</div><div class="metric-sub">condutores</div></div></div><div class="iconbox">COND</div></div>
+          <div class="delta flat" id="deltaDriversBelowMeta">- vs mes anterior</div>
+          <div class="kpi-foot">Motoristas com consumo abaixo da meta no mes selecionado</div>
         </article>
         <article class="card action-card">
-          <div class="kpi-top"><div class="kpi-meta"><div class="kpi-label">Excesso de velocidade</div><div class="metric-line"><div class="metric-big" id="speedExecutive">-</div><div class="metric-sub">mÃ©dio</div></div></div><div class="iconbox">âš ï¸</div></div>
-          <div class="delta flat" id="deltaSpeedExecutive">â€” vs mÃªs anterior</div>
-          <div class="kpi-foot">Indicador mantido no painel como risco operacional e de seguranÃ§a</div>
+          <div class="kpi-top"><div class="kpi-meta"><div class="kpi-label">Excesso de velocidade</div><div class="metric-line"><div class="metric-big" id="speedExecutive">-</div><div class="metric-sub">medio</div></div></div><div class="iconbox">VEL</div></div>
+          <div class="delta flat" id="deltaSpeedExecutive">- vs mes anterior</div>
+          <div class="kpi-foot">Indicador mantido no painel como risco operacional e de seguranca</div>
         </article>
       </div>
 
@@ -738,16 +718,6 @@
           <div class="mini-value" id="indSupport">-</div>
           <div class="delta flat" id="deltaSupport">— vs mês anterior</div>
           <div class="mini-note">Utilização média do suporte do motorista</div>
-        </section>
-      </div>
-
-      <div class="stack-grid">
-        <section class="panel">
-          <div class="panel-head">
-            <h3 class="panel-title" style="margin:0;">Evolução mensal de consumo e nota</h3>
-            <span class="subtle">12 meses</span>
-          </div>
-          <div id="chartTrend"></div>
         </section>
       </div>
 
@@ -806,13 +776,12 @@
     <div class="footer-note">Dashboard estático para Cloudflare Pages com leitura direta do Google Sheets publicado. Comparativos calculados automaticamente com o mês anterior disponível.</div>
   </main>
 
-  <script>window.formatMoney = window.formatMoney || function(v){return Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0});};</script>
   <script type="module">
     import { CONFIG, state } from './js/config.js';
     import { dashboardUI } from './js/ui-renderer.js';
 
     // Logo
-    document.getElementById('logoImg').src = CONFIG.logoSrc || CONFIG.logoDataUrl;
+    document.getElementById('logoImg').src = CONFIG.logoSrc;
 
     // Event listeners
     document.getElementById('refreshBtn').addEventListener('click', () => dashboardUI.refresh());

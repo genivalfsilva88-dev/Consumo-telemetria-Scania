@@ -582,7 +582,7 @@ export class DashboardUI {
     setEl('idleLiters', formatInt(summary.idleLiters));
     setEl('driversBelowMeta', formatInt(summary.driversBelowMetaCount));
     setEl('speedExecutive', `${formatNumber(summary.excessoVelocidade, 1)}%`);
-    setEl('treesEquivalent', formatInt(summary.treesEquivalent));
+    setEl('idleAboveTarget', formatInt(summary.idleAboveTargetCount));
 
     // Deltas
     const prevMonth = this.previousLoadedMonth(state.selectedMonth);
@@ -594,7 +594,7 @@ export class DashboardUI {
     this._setDelta('deltaCritical', summary.criticalCount, prevSummary.criticalCount, false, '', 0);
     this._setDelta('deltaSupportExecutive', summary.supportUsageMedio, prevSummary.supportUsageMedio, true, ' p.p.', 1);
     this._setDelta('deltaIdleLiters', summary.idleLiters, prevSummary.idleLiters, false, ' l', 0);
-    this._setDelta('deltaTrees', summary.treesEquivalent, prevSummary.treesEquivalent, false, '', 0);
+    this._setDelta('deltaIdleAboveTarget', summary.idleAboveTargetCount, prevSummary.idleAboveTargetCount, false, '', 0);
     this._setDelta('deltaDriversBelowMeta', summary.driversBelowMetaCount, prevSummary.driversBelowMetaCount, false, '', 0);
     this._setDelta('deltaSpeedExecutive', summary.excessoVelocidade, prevSummary.excessoVelocidade, false, ' p.p.', 1);
   }
