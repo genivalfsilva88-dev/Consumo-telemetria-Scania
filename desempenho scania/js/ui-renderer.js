@@ -3,7 +3,6 @@ import { cacheManager } from './cache.js';
 import { DataLoader, normalizeMonthRows } from './data-loader.js';
 import {
   computeMonthSummary,
-  buildInsights,
   summarizeDrivers,
   computeStatusSummary,
   computePrimaryPressure,
@@ -44,7 +43,6 @@ export class DashboardUI {
       this._populateMonthSelect();
       this._populateDriverSelect();
       this._populateFleetSelect();
-      this._setupAdvancedFilters();
       this._setupExportButtons();
       
       // Render dashboard
@@ -88,7 +86,6 @@ export class DashboardUI {
     this._renderKPIs(summary, prevSummary);
     this._renderExecutiveBriefing(summary, rows);
     this._renderComparisonPanel(month, summary, prevSummary, prevMonth);
-    this._renderInsightsPanel(summary, prevSummary, prevMonth);
     this._renderAlertsPanel();
     this._renderActionCards(summary);
     this._renderTrendChart();
@@ -118,24 +115,6 @@ export class DashboardUI {
     // Fleet filter
     if (state.selectedFleet !== 'TODOS') {
       rows = rows.filter(r => r.equipamento === state.selectedFleet);
-    }
-    
-    // Advanced filters
-    const filters = state.customFilters;
-    if (filters.minConsumption !== null) {
-      rows = rows.filter(r => r.consumo >= filters.minConsumption);
-    }
-    if (filters.maxConsumption !== null) {
-      rows = rows.filter(r => r.consumo <= filters.maxConsumption);
-    }
-    if (filters.minScore !== null) {
-      rows = rows.filter(r => r.score >= filters.minScore);
-    }
-    if (filters.maxScore !== null) {
-      rows = rows.filter(r => r.score <= filters.maxScore);
-    }
-    if (filters.fleetNumber) {
-      rows = rows.filter(r => r.equipamento.includes(filters.fleetNumber));
     }
     
     return rows;
@@ -317,51 +296,6 @@ export class DashboardUI {
     };
   }
 
-  _setupAdvancedFilters() {
-    const applyBtn = document.getElementById('applyFiltersBtn');
-    const clearBtn = document.getElementById('clearFiltersBtn');
-    
-    if (applyBtn) {
-      applyBtn.addEventListener('click', () => {
-        const minCons = document.getElementById('filterMinConsumption')?.value;
-        const maxCons = document.getElementById('filterMaxConsumption')?.value;
-        const minScore = document.getElementById('filterMinScore')?.value;
-        const maxScore = document.getElementById('filterMaxScore')?.value;
-        const fleetNum = document.getElementById('filterFleetNumber')?.value;
-        
-        state.customFilters = {
-          minConsumption: minCons ? parseFloat(minCons) : null,
-          maxConsumption: maxCons ? parseFloat(maxCons) : null,
-          minScore: minScore ? parseFloat(minScore) : null,
-          maxScore: maxScore ? parseFloat(maxScore) : null,
-          fleetNumber: fleetNum || null
-        };
-        
-        this.renderDashboard();
-      });
-    }
-    
-    if (clearBtn) {
-      clearBtn.addEventListener('click', () => {
-        state.customFilters = {
-          minConsumption: null,
-          maxConsumption: null,
-          minScore: null,
-          maxScore: null,
-          fleetNumber: null
-        };
-        
-        document.getElementById('filterMinConsumption').value = '';
-        document.getElementById('filterMaxConsumption').value = '';
-        document.getElementById('filterMinScore').value = '';
-        document.getElementById('filterMaxScore').value = '';
-        document.getElementById('filterFleetNumber').value = '';
-        
-        this.renderDashboard();
-      });
-    }
-  }
-
   _setupExportButtons() {
     document.getElementById('csvBtn')?.addEventListener('click', () => {
       const rows = this.getFilteredRows(state.selectedMonth);
@@ -539,14 +473,6 @@ export class DashboardUI {
     }).join('');
   }
 
-  _renderInsightsPanel(current, previous, prevMonth) {
-    const target = document.getElementById('insightsList');
-    const insights = buildInsights(current, previous, prevMonth);
-    target.innerHTML = insights.map(item =>
-      `<div class="insight-item"><div class="insight-icon">${item.icon}</div><div>${item.text}</div></div>`
-    ).join('');
-  }
-
   _renderAlertsPanel() {
     const target = document.getElementById('alertsList');
     if (!target) return;
@@ -679,7 +605,7 @@ export class DashboardUI {
     const titleText = state.selectedDriver === 'TODOS' ? 'Visão executiva de condutores' : state.selectedDriver;
     
     if (state.selectedDriver === 'TODOS') {
-      const rows = state.monthData[month] || [];
+      const rows = this.getFilteredRows(month);
       const byDriver = new Map();
       rows.forEach(r => {
         if (!byDriver.has(r.motorista)) byDriver.set(r.motorista, []);
@@ -707,11 +633,7 @@ export class DashboardUI {
           </div>
         </div>` : '<div class="empty">Sem dados de motoristas para este período.</div>';
 
-      ['driverSummaryTitle', 'driverSummaryBox'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el && id === 'driverSummaryTitle') el.textContent = titleText;
-        if (el && id === 'driverSummaryBox') el.innerHTML = html;
-      });
+      this._setDriverSummary(titleText, html);
     } else {
       const rows = this.getFilteredRows(month);
       const s = computeMonthSummary(rows);
@@ -728,12 +650,22 @@ export class DashboardUI {
           <div class="summary-box"><div class="subtle">Pontos de atenção</div><div class="subtle" style="margin-top:10px; line-height:1.7;">Marcha lenta: <strong>${formatNumber(s.marchaLenta, 1)}%</strong><br>Inércia: <strong>${formatNumber(s.inercia, 1)}%</strong><br>Excesso vel.: <strong>${formatNumber(s.excessoVelocidade, 1)}%</strong></div></div>
         </div>`;
 
-      ['driverSummaryTitle', 'driverSummaryBox'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el && id === 'driverSummaryTitle') el.textContent = titleText;
-        if (el && id === 'driverSummaryBox') el.innerHTML = html;
-      });
+      this._setDriverSummary(titleText, html);
     }
+  }
+
+  _setDriverSummary(title, html) {
+    const targets = [
+      ['driverSummaryTitle', 'driverSummaryBox'],
+      ['driverSummaryTitleFleet', 'driverSummaryBoxFleet']
+    ];
+
+    targets.forEach(([titleId, boxId]) => {
+      const titleEl = document.getElementById(titleId);
+      const boxEl = document.getElementById(boxId);
+      if (titleEl) titleEl.textContent = title;
+      if (boxEl) boxEl.innerHTML = html;
+    });
   }
 
   _renderIdleImpactChart(month) {

@@ -143,49 +143,6 @@ export function computeMonthSummary(rows) {
 }
 
 /**
- * Build insights for dashboard
- */
-export function buildInsights(current, previous, prevMonth) {
-  const items = [];
-  
-  if (!current.frota) {
-    return [{ icon: 'ℹ️', text: 'Sem dados no filtro atual para gerar insights operacionais.' }];
-  }
-
-  items.push({
-    icon: current.metaHitPct >= 70 ? '🎯' : '📉',
-    text: current.metaHitPct >= 70
-      ? `${formatNumber(current.metaHitPct, 1)}% da frota filtrada atingiu a meta de consumo.`
-      : `Apenas ${formatNumber(current.metaHitPct, 1)}% da frota filtrada atingiu a meta. Priorize acompanhamento.`
-  });
-
-  if (current.criticalCount > 0) {
-    items.push({
-      icon: '🚨',
-      text: `${formatInt(current.criticalCount)} equipamento(s) estão em condição crítica por nota baixa ou consumo abaixo da meta.`
-    });
-  }
-
-  items.push({
-    icon: current.savingsLiters > 0 ? '💰' : '✅',
-    text: current.savingsLiters > 0
-      ? `Potencial estimado de economia de ${formatInt(current.savingsLiters)} litros no período (≈ R$ ${formatMoney(current.savingsValue)}).`
-      : 'No filtro atual, a frota está alinhada com a meta de consumo e sem potencial relevante de economia.'
-  });
-
-  if (prevMonth && previous.frota > 0) {
-    const scoreDiff = current.scoreMedio - previous.scoreMedio;
-    const consumoDiff = current.consumoMedio - previous.consumoMedio;
-    items.push({
-      icon: scoreDiff >= 0 ? '📈' : '📊',
-      text: `Vs ${prevMonth}, a nota ${scoreDiff >= 0 ? 'subiu' : 'caiu'} ${formatNumber(Math.abs(scoreDiff), 1)} pts e o consumo ${consumoDiff >= 0 ? 'melhorou' : 'reduziu'} ${formatNumber(Math.abs(consumoDiff), 2)} km/l.`
-    });
-  }
-
-  return items.slice(0, 4);
-}
-
-/**
  * Summarize drivers by performance
  */
 export function summarizeDrivers(rows) {

@@ -490,39 +490,6 @@
         </div>
       </section>
 
-      <!-- Filtros Avançados -->
-      <section class="panel" style="margin-bottom:18px;" aria-label="Filtros avançados">
-        <div class="panel-head">
-          <h3 class="panel-title" style="margin:0;">🔍 Filtros avançados</h3>
-          <button class="button" id="clearFiltersBtn" style="height:32px; font-size:11px; padding:0 12px;">Limpar filtros</button>
-        </div>
-        <div style="display:grid; grid-template-columns: repeat(5, minmax(0,1fr)); gap:12px; align-items:end;">
-          <div class="control-wrap">
-            <span class="control-label">Consumo mín (km/l)</span>
-            <input type="number" class="control" id="filterMinConsumption" placeholder="Ex: 2.5" step="0.1" style="height:40px;" />
-          </div>
-          <div class="control-wrap">
-            <span class="control-label">Consumo máx (km/l)</span>
-            <input type="number" class="control" id="filterMaxConsumption" placeholder="Ex: 4.0" step="0.1" style="height:40px;" />
-          </div>
-          <div class="control-wrap">
-            <span class="control-label">Nota mín</span>
-            <input type="number" class="control" id="filterMinScore" placeholder="Ex: 70" min="0" max="100" style="height:40px;" />
-          </div>
-          <div class="control-wrap">
-            <span class="control-label">Nota máx</span>
-            <input type="number" class="control" id="filterMaxScore" placeholder="Ex: 90" min="0" max="100" style="height:40px;" />
-          </div>
-          <div class="control-wrap">
-            <span class="control-label">Nº Equipamento</span>
-            <input type="text" class="control" id="filterFleetNumber" placeholder="Ex: 1234" style="height:40px;" />
-          </div>
-        </div>
-        <div style="margin-top:12px; text-align:right;">
-          <button class="button primary" id="applyFiltersBtn" style="height:38px; padding:0 18px;">Aplicar filtros</button>
-        </div>
-      </section>
-
     <div class="decision-grid">
       <article class="decision-card neutral" id="decisionStatusCard">
         <span class="decision-tag" id="decisionStatusTag">Status • Carregando</span>
@@ -610,15 +577,6 @@
           </div>
         </section>
 
-        <section class="panel soft-accent full-span insight-panel">
-          <div class="panel-head">
-            <h3 class="panel-title" style="margin:0;">Insights operacionais</h3>
-            <span class="subtle">Ações prioritárias</span>
-          </div>
-          <div class="insight-list" id="insightsList">
-            <div class="empty">Carregando insights...</div>
-          </div>
-        </section>
       </div>
 
       <div class="action-grid">
@@ -742,6 +700,7 @@
             <span class="subtle" id="gradeDistSubtitle">Classificação visual do mês</span>
           </div>
           <div id="chartGradeDist"></div>
+          <div class="subtle" style="margin-top:10px;">Critério: A ≥ 90 | B 80-89 | C 70-79 | D 60-69 | E abaixo de 60.</div>
         </section>
       </div>
 

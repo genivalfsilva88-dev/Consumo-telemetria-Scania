@@ -51,14 +51,6 @@ export const state = {
   selectedFleet: 'TODOS',
   currentPage: 'executive',
   metaMap: new Map(),
-  customFilters: {
-    minConsumption: null,
-    maxConsumption: null,
-    minScore: null,
-    maxScore: null,
-    fleetNumber: null,
-    dateRange: null
-  },
   alerts: [],
   cache: {
     data: null,
