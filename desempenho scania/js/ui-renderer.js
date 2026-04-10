@@ -3,10 +3,7 @@ import { cacheManager } from './cache.js';
 import { DataLoader, normalizeMonthRows } from './data-loader.js';
 import {
   computeMonthSummary,
-  summarizeDrivers,
-  computeStatusSummary,
   computePrimaryPressure,
-  pickPriorityDriver,
   deltaInfo,
   generateAlerts,
   forecastTrend,
@@ -84,7 +81,7 @@ export class DashboardUI {
     
     // Render all sections
     this._renderKPIs(summary, prevSummary);
-    this._renderExecutiveBriefing(summary, rows);
+    this._renderExecutiveBriefing(summary);
     this._renderComparisonPanel(month, summary, prevSummary, prevMonth);
     this._renderAlertsPanel();
     this._renderActionCards(summary);
@@ -387,12 +384,9 @@ export class DashboardUI {
     this._setDelta('deltaSupport', summary.supportUsageMedio, prevSummary.supportUsageMedio, true, ' p.p.', 1);
   }
 
-  _renderExecutiveBriefing(summary, rows) {
-    const status = computeStatusSummary(summary);
+  _renderExecutiveBriefing(summary) {
     const pressure = computePrimaryPressure(summary);
-    const priorityDriver = pickPriorityDriver(rows);
 
-    this._setDecisionCard('Status', `Status • ${status.tag}`, status.value, status.foot, status.tone);
     this._setDecisionCard('Risk', `Risco • ${pressure.tag}`, pressure.value, pressure.foot, pressure.tone);
     
     this._setDecisionCard(
@@ -405,17 +399,6 @@ export class DashboardUI {
       summary.savingsValue > 0 ? 'warning' : 'success'
     );
 
-    if (priorityDriver) {
-      this._setDecisionCard(
-        'Driver',
-        priorityDriver.severity >= 3 ? 'Motorista • Ação prioritária' : 'Motorista • Maior atenção',
-        priorityDriver.motorista,
-        `Nota ${formatNumber(priorityDriver.summary.scoreMedio, 1)} • Consumo ${formatNumber(priorityDriver.summary.consumoMedio, 2)} km/l${priorityDriver.summary.metaMedia ? ` • Meta ${formatNumber(priorityDriver.summary.metaMedia, 2)}` : ''}`,
-        priorityDriver.severity >= 3 ? 'danger' : 'warning'
-      );
-    } else {
-      this._setDecisionCard('Driver', 'Motorista • Sem recorte', 'Sem dados', 'Não há dados suficientes para priorizar um condutor.', 'neutral');
-    }
   }
 
   _setDecisionCard(section, tag, value, foot, tone) {
@@ -693,7 +676,12 @@ export class DashboardUI {
     const forecast = forecastTrend(data, 2);
 
     if (forecast.length === 0) {
-      target.innerHTML = '<div class="empty">Dados insuficientes para projeção</div>';
+      target.className = 'decision-card neutral';
+      target.innerHTML = `
+        <span class="decision-tag">Projeção • Tendência</span>
+        <div class="decision-value">Sem base</div>
+        <div class="decision-foot">Dados insuficientes para estimar os próximos meses.</div>
+      `;
       return;
     }
 
@@ -702,7 +690,12 @@ export class DashboardUI {
     const lastMonthIdx = loadedMonths.length > 0 ? monthNames.indexOf(loadedMonths[loadedMonths.length - 1]) : -1;
 
     if (lastMonthIdx < 0) {
-      target.innerHTML = '<div class="empty">Sem dados para projeção</div>';
+      target.className = 'decision-card neutral';
+      target.innerHTML = `
+        <span class="decision-tag">Projeção • Tendência</span>
+        <div class="decision-value">Sem base</div>
+        <div class="decision-foot">Não há mês carregado para gerar a projeção.</div>
+      `;
       return;
     }
 
@@ -711,20 +704,15 @@ export class DashboardUI {
       return monthNames[idx];
     });
 
+    const lastActual = data[data.length - 1] || 0;
+    const next = forecast[0];
+    const second = forecast[1];
+    const isImproving = next.value >= lastActual;
+    target.className = `decision-card ${isImproving ? 'success' : 'warning'}`;
     target.innerHTML = `
-      <div class="panel-head">
-        <h3 class="panel-title" style="margin:0;">Projeção de tendência</h3>
-        <span class="subtle">Próximos 2 meses (estimativa linear)</span>
-      </div>
-      <div class="executive-strip">
-        ${forecast.map((f, i) => `
-          <div class="exec-pill">
-            <div class="exec-label">${forecastMonths[i] || 'Mês ' + (i + 1)}</div>
-            <div class="exec-value">${formatNumber(f.value, 2)} km/l</div>
-            <div class="exec-foot">Consumo projetado</div>
-          </div>
-        `).join('')}
-      </div>
+      <span class="decision-tag">Projeção • Tendência</span>
+      <div class="decision-value">${forecastMonths[0] || 'Próx.'}: ${formatNumber(next.value, 2)} km/l</div>
+      <div class="decision-foot">${second ? `${forecastMonths[1]}: ${formatNumber(second.value, 2)} km/l. ` : ''}Estimativa linear com os meses carregados.</div>
     `;
   }
 

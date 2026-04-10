@@ -269,7 +269,7 @@
     }
     .decision-grid {
       display:grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 16px;
       margin-bottom: 2px;
     }
@@ -491,11 +491,6 @@
       </section>
 
     <div class="decision-grid">
-      <article class="decision-card neutral" id="decisionStatusCard">
-        <span class="decision-tag" id="decisionStatusTag">Status • Carregando</span>
-        <div class="decision-value" id="decisionStatusValue">-</div>
-        <div class="decision-foot" id="decisionStatusFoot">Resumo da situação geral da frota filtrada.</div>
-      </article>
       <article class="decision-card neutral" id="decisionRiskCard">
         <span class="decision-tag" id="decisionRiskTag">Risco • Carregando</span>
         <div class="decision-value" id="decisionRiskValue">-</div>
@@ -506,10 +501,10 @@
         <div class="decision-value" id="decisionOpportunityValue">-</div>
         <div class="decision-foot" id="decisionOpportunityFoot">Maior frente de recuperação financeira.</div>
       </article>
-      <article class="decision-card neutral" id="decisionDriverCard">
-        <span class="decision-tag" id="decisionDriverTag">Motorista • Carregando</span>
-        <div class="decision-value" id="decisionDriverValue">-</div>
-        <div class="decision-foot" id="decisionDriverFoot">Condutor com maior necessidade de acompanhamento.</div>
+      <article class="decision-card neutral" id="forecastPanel">
+        <span class="decision-tag">Projeção de tendência</span>
+        <div class="decision-value">-</div>
+        <div class="decision-foot">Carregando projeção...</div>
       </article>
     </div>
 
@@ -634,11 +629,6 @@
           <div id="chartTrend"></div>
         </section>
       </div>
-
-      <!-- Projeção de Tendência -->
-      <section class="panel" id="forecastPanel" style="margin-top:18px;">
-        <div class="empty">Carregando projeção...</div>
-      </section>
 
       </section>
     </section>
