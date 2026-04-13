@@ -10,6 +10,7 @@ import {
   formatNumber,
   formatInt,
   formatMoney,
+  formatCurrencyInput,
   gradeClass,
   pillColor
 } from './calculations.js';
@@ -40,6 +41,7 @@ export class DashboardUI {
       this._populateMonthSelect();
       this._populateDriverSelect();
       this._populateFleetSelect();
+      this._setupDieselInput();
       this._setupExportButtons();
       
       // Render dashboard
@@ -293,17 +295,42 @@ export class DashboardUI {
     };
   }
 
+  _setupDieselInput() {
+    const input = document.getElementById('dieselInput');
+    if (!input) return;
+
+    input.value = formatCurrencyInput(state.dieselAverage);
+
+    const applyValue = rawValue => {
+      const normalized = Number.parseFloat(String(rawValue || '').replace(',', '.'));
+      state.dieselAverage = Number.isFinite(normalized) && normalized > 0
+        ? normalized
+        : CONFIG.defaultDieselPrice;
+      input.value = formatCurrencyInput(state.dieselAverage);
+      this.renderDashboard();
+    };
+
+    input.onchange = event => applyValue(event.target.value);
+    input.onblur = event => applyValue(event.target.value);
+    input.onkeydown = event => {
+      if (event.key === 'Enter') applyValue(event.target.value);
+    };
+  }
+
   _setupExportButtons() {
-    document.getElementById('csvBtn')?.addEventListener('click', () => {
+    const csvBtn = document.getElementById('csvBtn');
+    const reportBtn = document.getElementById('reportBtn');
+
+    if (csvBtn) csvBtn.onclick = () => {
       const rows = this.getFilteredRows(state.selectedMonth);
       exportManager.exportToCSV(state.selectedMonth, rows);
-    });
+    };
 
-    document.getElementById('reportBtn')?.addEventListener('click', () => {
+    if (reportBtn) reportBtn.onclick = () => {
       const rows = this.getFilteredRows(state.selectedMonth);
       const summary = computeMonthSummary(rows);
       exportManager.exportReportText(state.selectedMonth, summary, state.alerts);
-    });
+    };
   }
 
   _renderAvailableMonths() {
@@ -394,7 +421,7 @@ export class DashboardUI {
       summary.savingsValue > 0 ? 'Oportunidade • Potencial financeiro' : 'Oportunidade • Custo sob controle',
       summary.savingsValue > 0 ? `R$ ${formatMoney(summary.savingsValue)}` : 'Sem desvio relevante',
       summary.savingsValue > 0
-        ? `${formatInt(summary.savingsLiters)} litros recuperáveis no mês filtrado.`
+        ? `${formatInt(summary.savingsLiters)} litros recuperáveis com diesel médio de R$ ${formatCurrencyInput(summary.dieselPrice)}/l.`
         : 'No filtro atual, a meta de consumo não indica desperdício relevante.',
       summary.savingsValue > 0 ? 'warning' : 'success'
     );
@@ -483,8 +510,9 @@ export class DashboardUI {
 
     setEl('metaHitPct', `${formatNumber(summary.metaHitPct, 1)}%`);
     setEl('metaHitCount', `${formatInt(summary.metaHitCount)} de ${formatInt(summary.validMetaCount || summary.frota)} equip.`);
-    setEl('savingsLiters', formatInt(summary.savingsLiters));
-    setEl('savingsValueFoot', `Estimativa financeira: R$ ${formatMoney(summary.savingsValue)}`);
+    setEl('savingsValue', `R$ ${formatMoney(summary.savingsValue)}`);
+    setEl('savingsLiters', `${formatInt(summary.savingsLiters)} litros recuperáveis`);
+    setEl('savingsValueFoot', `Cálculo com diesel médio de R$ ${formatCurrencyInput(summary.dieselPrice)}/l`);
     setEl('criticalCount', formatInt(summary.criticalCount));
     setEl('criticalPct', `${formatNumber(summary.criticalPct, 1)}% da frota`);
     setEl('supportExecutive', `${formatNumber(summary.supportUsageMedio, 1)}%`);
@@ -497,9 +525,14 @@ export class DashboardUI {
     const prevMonth = this.previousLoadedMonth(state.selectedMonth);
     const prevRows = prevMonth ? this.getFilteredRows(prevMonth) : [];
     const prevSummary = computeMonthSummary(prevRows);
+    const savingsDelta = deltaInfo(summary.savingsValue, prevSummary.savingsValue, false, '', 0);
+    const savingsDeltaEl = document.getElementById('deltaSavings');
 
     this._setDelta('deltaMetaHit', summary.metaHitPct, prevSummary.metaHitPct, true, ' p.p.', 1);
-    this._setDelta('deltaSavings', summary.savingsLiters, prevSummary.savingsLiters, false, ' l', 0);
+    if (savingsDeltaEl) {
+      savingsDeltaEl.className = `delta ${savingsDelta.cls}`;
+      savingsDeltaEl.textContent = savingsDelta.text.replace(/^([▲▼]) /, '$1 R$ ');
+    }
     this._setDelta('deltaCritical', summary.criticalCount, prevSummary.criticalCount, false, '', 0);
     this._setDelta('deltaSupportExecutive', summary.supportUsageMedio, prevSummary.supportUsageMedio, true, ' p.p.', 1);
     this._setDelta('deltaIdleLiters', summary.idleLiters, prevSummary.idleLiters, false, ' l', 0);

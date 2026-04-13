@@ -454,6 +454,10 @@
           <span class="control-label" id="fleetLabel">Equipamento</span>
           <select class="control" id="fleetSelect" aria-labelledby="fleetLabel"></select>
         </div>
+        <div class="control-wrap">
+          <span class="control-label" id="dieselLabel">Diesel médio (R$/L)</span>
+          <input class="control" id="dieselInput" type="text" inputmode="decimal" aria-labelledby="dieselLabel" />
+        </div>
         <button class="button" id="refreshBtn" aria-label="Atualizar dados">Atualizar</button>
         <button class="button" id="csvBtn" aria-label="Exportar para CSV">CSV</button>
         <button class="button" id="reportBtn" aria-label="Exportar relatório">Relatório</button>
@@ -581,9 +585,9 @@
           <div class="kpi-foot">Percentual da frota filtrada no ou acima do alvo de consumo</div>
         </article>
         <article class="card action-card">
-          <div class="kpi-top"><div class="kpi-meta"><div class="kpi-label">Potencial de economia</div><div class="metric-line"><div class="metric-big" id="savingsLiters">-</div><div class="metric-sub">litros</div></div></div><div class="iconbox">R$</div></div>
+          <div class="kpi-top"><div class="kpi-meta"><div class="kpi-label">Potencial de economia</div><div class="metric-line"><div class="metric-big" id="savingsValue">-</div><div class="metric-sub" id="savingsLiters">-</div></div></div><div class="iconbox">R$</div></div>
           <div class="delta flat" id="deltaSavings">- vs mes anterior</div>
-          <div class="kpi-foot" id="savingsValueFoot">Estimativa financeira baseada em R$ 6,00 por litro</div>
+          <div class="kpi-foot" id="savingsValueFoot">Cálculo com diesel médio de R$ 6,30/l</div>
         </article>
         <article class="card action-card">
           <div class="kpi-top"><div class="kpi-meta"><div class="kpi-label">Equipamentos criticos</div><div class="metric-line"><div class="metric-big" id="criticalCount">-</div><div class="metric-sub" id="criticalPct">-</div></div></div><div class="iconbox">RISCO</div></div>

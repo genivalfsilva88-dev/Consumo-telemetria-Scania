@@ -39,6 +39,17 @@ export function formatMoney(value) {
   });
 }
 
+export function formatCurrencyInput(value) {
+  return Number(value || 0).toLocaleString('pt-BR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+}
+
+export function currentDieselPrice() {
+  return clamp(Number(state.dieselAverage || CONFIG.defaultDieselPrice || 0), 0, 999);
+}
+
 export function gradeClass(letter) {
   return `grade-${String(letter || 'e').toLowerCase()}`;
 }
@@ -57,6 +68,8 @@ export function pillColor(letter) {
  * Compute summary for a set of rows
  */
 export function computeMonthSummary(rows) {
+  const dieselPrice = currentDieselPrice();
+
   if (!rows || rows.length === 0) {
     return {
       frota: 0,
@@ -73,6 +86,7 @@ export function computeMonthSummary(rows) {
       metaBelowCount: 0,
       savingsLiters: 0,
       savingsValue: 0,
+      dieselPrice,
       criticalCount: 0,
       criticalPct: 0,
       grade: 'E',
@@ -126,7 +140,8 @@ export function computeMonthSummary(rows) {
     validMetaCount: validMetaRows.length,
     metaBelowCount: belowMetaRows.length,
     savingsLiters,
-    savingsValue: savingsLiters * 6,
+    savingsValue: savingsLiters * dieselPrice,
+    dieselPrice,
     criticalCount: criticalRows.length,
     criticalPct: rows.length ? (criticalRows.length / rows.length) * 100 : 0,
     grade: gradeFromScore(avg(rows, 'score')),

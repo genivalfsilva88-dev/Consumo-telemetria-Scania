@@ -4,6 +4,7 @@ export const CONFIG = {
   subtitle: 'Painel de Desempenho',
   sheetId: '1rJD9B5YP98mrzYI2MTv2ouPZjPnh9bc2C3eHeywg2ug',
   logoSrc: 'Logo Ziran.jpg',
+  defaultDieselPrice: 6.3,
   monthNames: [
     'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
     'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
@@ -49,6 +50,7 @@ export const state = {
   selectedMonth: null,
   selectedDriver: 'TODOS',
   selectedFleet: 'TODOS',
+  dieselAverage: CONFIG.defaultDieselPrice,
   currentPage: 'executive',
   metaMap: new Map(),
   alerts: [],
