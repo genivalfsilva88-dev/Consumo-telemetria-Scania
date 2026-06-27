@@ -49,14 +49,25 @@ desempenho scania/
 
 ## Nota do motorista
 
-A nota composta considera:
+A nota composta e uma media ponderada (pesos em `config.js > scoring.weights`):
 
-- consumo real vs meta
-- Scania Driver Support (%)
-- marcha lenta, com meta operacional de 20%
-- inercia
+- consumo real vs meta (50%)
+- Scania Driver Support (%) (20%)
+- marcha lenta, meta operacional de 20% (20%)
+- inercia, normalizada contra a meta de 12% (10%)
 
-Excesso de velocidade nao entra na nota, mas continua no painel como indicador de risco operacional e seguranca.
+Quando algum componente nao se aplica (ex.: equipamento sem meta), os pesos sao renormalizados entre os componentes disponiveis. Excesso de velocidade nao entra na nota, mas continua no painel como indicador de risco operacional e seguranca.
+
+## Gestao de custos
+
+O painel estima valores em R$ a partir do diesel medio informado na barra de controles (`Diesel medio (R$/L)`):
+
+- Custo total de combustivel do periodo
+- Desperdicio por consumo abaixo da meta (economia potencial)
+- Custo do combustivel em marcha lenta
+- Economia ja realizada pelos equipamentos acima da meta
+
+Esses valores tambem saem no CSV (colunas por equipamento) e no relatorio texto.
 
 ## Dados
 

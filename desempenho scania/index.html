@@ -142,101 +142,133 @@
 
     :root {
       --bg: #edf2fb;
-      --panel: rgba(255,255,255,.92);
-      --text: #08152d;
+      --panel: rgba(255,255,255,.95);
+      --text: #0f172a;
       --muted: #5b7190;
-      --border: rgba(154, 177, 210, .28);
+      --border: rgba(118, 149, 196, .20);
       --navy: #081c43;
       --navy-2: #12346d;
-      --card-shadow: 0 20px 45px rgba(8, 21, 45, .10);
-      --radius: 24px;
+      --success: #16a34a;
+      --warning: #d97706;
+      --danger: #dc2626;
+      --info: #2563eb;
+      --card-shadow: 0 12px 32px rgba(8, 21, 45, .08);
+      --radius: 18px;
     }
     html, body {
       font-family: "Manrope", "Segoe UI", sans-serif;
+      line-height: 1.45;
       background:
-        radial-gradient(circle at top left, rgba(59,196,255,.16), transparent 34%),
-        radial-gradient(circle at top right, rgba(215,25,32,.14), transparent 26%),
-        linear-gradient(180deg, #f7faff 0%, var(--bg) 42%, #e8effb 100%);
+        radial-gradient(circle at top left, rgba(59,196,255,.12), transparent 34%),
+        radial-gradient(circle at top right, rgba(215,25,32,.10), transparent 26%),
+        linear-gradient(180deg, #f8fbff 0%, var(--bg) 48%, #e9f0fb 100%);
     }
     .topbar {
       background:
-        radial-gradient(circle at top right, rgba(59,196,255,.18), transparent 28%),
-        linear-gradient(135deg, var(--navy) 0%, var(--navy-2) 100%);
-      box-shadow: 0 16px 38px rgba(12, 33, 71, .24);
+        radial-gradient(circle at top right, rgba(59,196,255,.14), transparent 28%),
+        linear-gradient(180deg, #0b1f46 0%, #12346d 100%);
+      border-bottom: 1px solid rgba(255,255,255,.10);
+      box-shadow: 0 12px 30px rgba(12, 33, 71, .20);
       overflow: hidden;
     }
     .topbar::before {
       content: '';
       position: absolute;
-      inset: auto auto -40px -80px;
-      width: 260px;
-      height: 160px;
+      inset: auto auto -46px -72px;
+      width: 220px;
+      height: 132px;
       border-radius: 999px;
-      background: rgba(255,255,255,.08);
-      filter: blur(10px);
+      background: rgba(255,255,255,.05);
+      filter: blur(12px);
     }
     .topbar-inner {
-      padding: 18px 18px 16px;
+      padding: 14px 18px 12px;
       grid-template-columns: minmax(320px, 1.1fr) minmax(520px, 1.15fr);
       position: relative;
     }
     .brand img {
-      width: 142px;
-      padding: 10px 14px;
-      border-radius: 18px;
-      box-shadow: 0 12px 28px rgba(0,0,0,.18);
+      width: 128px;
+      padding: 9px 13px;
+      border-radius: 16px;
+      box-shadow: 0 10px 22px rgba(0,0,0,.16);
     }
     .brand h1 {
-      font-size: clamp(24px, 2.4vw, 38px);
-      line-height: 1.02;
-      letter-spacing: -.03em;
+      font-size: clamp(22px, 2.1vw, 32px);
+      line-height: 1.04;
+      letter-spacing: -.025em;
     }
-    .brand p { margin-top: 6px; }
-    .brand-block { display:grid; gap:12px; min-width:0; }
-    .topnav { display:flex; gap:10px; flex-wrap:wrap; }
+    .brand p { margin-top: 4px; font-size: 12px; }
+    .brand-block { display:grid; gap:10px; min-width:0; }
+    .topnav { display:flex; gap:8px; flex-wrap:wrap; }
     .nav-pill {
-      border: 1px solid rgba(255,255,255,.18);
-      background: rgba(255,255,255,.10);
-      color: rgba(255,255,255,.86);
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.08);
+      color: rgba(255,255,255,.72);
       border-radius: 999px;
-      padding: 10px 14px;
+      padding: 9px 13px;
       font: inherit;
-      font-size: 12px;
-      font-weight: 800;
+      font-size: 11px;
+      font-weight: 600;
       cursor: pointer;
-      backdrop-filter: blur(12px);
+      backdrop-filter: blur(10px);
     }
     .nav-pill.active {
-      background: #fff;
+      background: rgba(255,255,255,.98);
       color: var(--navy);
-      box-shadow: 0 12px 24px rgba(0,0,0,.14);
+      box-shadow: 0 6px 16px rgba(0,0,0,.10);
     }
     .control-label {
+      font-size: 10px;
       letter-spacing: .08em;
       font-weight: 800;
     }
     .control, .button {
-      box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
+      height: 40px;
+      font-size: 12px;
     }
     .control {
-      backdrop-filter: blur(14px);
+      background: rgba(255,255,255,.10);
+      border-color: rgba(255,255,255,.10);
+      color: rgba(255,255,255,.92);
+      backdrop-filter: blur(12px);
     }
-    .container { padding-top: 22px; }
+    .button {
+      background: rgba(255,255,255,.08);
+      border-color: rgba(255,255,255,.10);
+      color: rgba(255,255,255,.88);
+      font-weight: 700;
+    }
+    .button.primary {
+      background: linear-gradient(135deg, rgba(255,255,255,.96), rgba(235,245,255,.98));
+      color: var(--navy);
+      border-color: rgba(255,255,255,.26);
+    }
+    .toolbar { gap: 8px; }
+    .control-wrap { gap: 5px; }
+    .container { padding-top: 18px; }
     .badge {
-      background: rgba(255,255,255,.76);
-      border-color: rgba(255,255,255,.7);
-      backdrop-filter: blur(16px);
-      font-weight: 800;
+      background: rgba(255,255,255,.92);
+      border-color: var(--border);
+      backdrop-filter: blur(14px);
+      font-weight: 700;
+      padding: 8px 12px;
+      font-size: 11px;
+      box-shadow: 0 8px 18px rgba(8, 21, 45, .05);
     }
     .month-chip {
-      background: rgba(255,255,255,.9);
-      border-color: rgba(255,255,255,.75);
+      background: rgba(255,255,255,.94);
+      border-color: var(--border);
+      padding: 8px 11px;
+      font-size: 11px;
+      box-shadow: 0 6px 14px rgba(8, 21, 45, .04);
     }
     .month-chip.active {
-      background: linear-gradient(135deg, rgba(37,99,235,.16), rgba(59,196,255,.22));
-      border-color: rgba(37,99,235,.20);
+      background: linear-gradient(135deg, rgba(37,99,235,.10), rgba(59,196,255,.14));
+      border-color: rgba(37, 99, 235, .20);
+      color: var(--info);
     }
-    .page-section { display:none; gap:18px; }
+    .page-section { display:none; gap:16px; }
     .page-section.active { display:grid; }
     .page-head {
       display:flex;
@@ -257,29 +289,29 @@
     }
     .page-title {
       margin: 0;
-      font-size: clamp(26px, 3vw, 38px);
-      line-height: 1;
-      letter-spacing: -.04em;
+      font-size: clamp(22px, 2.2vw, 30px);
+      line-height: 1.02;
+      letter-spacing: -.03em;
       font-weight: 800;
     }
     .page-note {
       color: var(--muted);
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 700;
     }
     .decision-grid {
       display:grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 16px;
+      gap: 14px;
       margin-bottom: 2px;
     }
     .decision-card {
       position: relative;
-      min-height: 150px;
-      padding: 18px;
-      border-radius: 24px;
-      background: linear-gradient(180deg, rgba(255,255,255,.98) 0%, rgba(244,247,253,.94) 100%);
-      border: 1px solid rgba(255,255,255,.78);
+      min-height: 128px;
+      padding: 16px;
+      border-radius: 16px;
+      background: linear-gradient(180deg, rgba(255,255,255,.98) 0%, rgba(247,250,255,.94) 100%);
+      border: 1px solid var(--border);
       box-shadow: var(--card-shadow);
       overflow: hidden;
     }
@@ -287,28 +319,28 @@
       content: '';
       position: absolute;
       inset: 0 0 auto 0;
-      height: 4px;
-      background: linear-gradient(90deg, rgba(59,196,255,.95), rgba(37,99,235,.95), rgba(215,25,32,.9));
+      height: 2px;
+      background: linear-gradient(90deg, rgba(59,196,255,.45), rgba(37,99,235,.55), rgba(215,25,32,.42));
     }
-    .decision-card.success::before { background: linear-gradient(90deg, #22c55e, #16a34a); }
-    .decision-card.warning::before { background: linear-gradient(90deg, #f59e0b, #f97316); }
-    .decision-card.danger::before { background: linear-gradient(90deg, #ef4444, #d71920); }
-    .decision-card.neutral::before { background: linear-gradient(90deg, #94a3b8, #64748b); }
+    .decision-card.success::before { background: linear-gradient(90deg, rgba(34,197,94,.52), rgba(22,163,74,.62)); }
+    .decision-card.warning::before { background: linear-gradient(90deg, rgba(245,158,11,.48), rgba(249,115,22,.58)); }
+    .decision-card.danger::before { background: linear-gradient(90deg, rgba(239,68,68,.46), rgba(215,25,32,.56)); }
+    .decision-card.neutral::before { background: linear-gradient(90deg, rgba(59,196,255,.45), rgba(37,99,235,.55), rgba(215,25,32,.42)); }
     .decision-card::after {
       content: '';
       position: absolute;
-      right: -24px;
-      bottom: -32px;
-      width: 112px;
-      height: 112px;
+      right: -18px;
+      bottom: -28px;
+      width: 96px;
+      height: 96px;
       border-radius: 999px;
-      background: radial-gradient(circle, rgba(59,196,255,.16) 0%, rgba(59,196,255,0) 70%);
+      background: radial-gradient(circle, rgba(59,196,255,.08) 0%, rgba(59,196,255,0) 72%);
     }
     .decision-tag {
       display:block;
       position: relative;
       z-index: 1;
-      font-size: 11px;
+      font-size: 10px;
       letter-spacing: .08em;
       text-transform: uppercase;
       color: var(--muted);
@@ -317,77 +349,138 @@
     .decision-value {
       position: relative;
       z-index: 1;
-      margin-top: 14px;
-      font-size: clamp(24px, 2.2vw, 36px);
-      line-height: .95;
-      letter-spacing: -.04em;
-      font-weight: 900;
+      margin-top: 12px;
+      font-size: clamp(21px, 1.9vw, 29px);
+      line-height: 1;
+      letter-spacing: -.03em;
+      font-weight: 800;
       max-width: 14ch;
+      color: var(--text);
     }
     .decision-foot {
       position: relative;
       z-index: 1;
-      margin-top: 12px;
+      margin-top: 10px;
       color: var(--muted);
-      font-size: 13px;
-      line-height: 1.5;
+      font-size: 12px;
+      line-height: 1.45;
       max-width: 38ch;
     }
     .insight-panel { min-height: auto; }
-    .fleet-detail-grid { display:grid; gap:18px; align-items:start; }
-    .fleet-top-grid { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:18px; align-items:start; }
-    .fleet-side { display:grid; gap:18px; }
+    .fleet-detail-grid { display:grid; gap:16px; align-items:start; }
+    .fleet-top-grid { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:16px; align-items:start; }
+    .fleet-side { display:grid; gap:16px; }
     .fleet-table-panel { min-width: 0; }
-    .fleet-table-panel .table-wrap { max-height: 820px; }
-    #chartIdleImpact { min-height: 310px; }
+    .fleet-table-panel .table-wrap { max-height: 760px; }
+    #chartIdleImpact { min-height: 280px; }
     .cards-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
     .card, .panel {
-      background: linear-gradient(180deg, rgba(255,255,255,.96) 0%, rgba(255,255,255,.9) 100%);
-      border-color: rgba(255,255,255,.78);
-      backdrop-filter: blur(16px);
+      background: linear-gradient(180deg, rgba(255,255,255,.97) 0%, rgba(248,251,255,.93) 100%);
+      border-color: var(--border);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 14px 34px rgba(8, 21, 45, .08);
     }
     .card::before, .panel::before {
       content: '';
       position: absolute;
       inset: 0 0 auto 0;
-      height: 4px;
-      background: linear-gradient(90deg, rgba(59,196,255,.9), rgba(37,99,235,.95), rgba(215,25,32,.9));
-      opacity: .9;
+      height: 2px;
+      background: linear-gradient(90deg, rgba(59,196,255,.38), rgba(37,99,235,.44), rgba(215,25,32,.36));
+      opacity: 1;
     }
     .card::after {
-      width: 120px;
-      height: 120px;
-      background: radial-gradient(circle, rgba(59,196,255,.18) 0%, rgba(59,196,255,0) 72%);
+      width: 88px;
+      height: 88px;
+      background: radial-gradient(circle, rgba(59,196,255,.08) 0%, rgba(59,196,255,0) 72%);
     }
-    .kpi-label { letter-spacing: .08em; }
+    .layout, .action-grid, .ranking-grid, .compare-grid, .mini-grid, .summary-panel { gap: 14px; }
+    .card { padding:16px 16px 14px; min-height: 126px; }
+    .panel { padding:16px; }
+    .panel-title {
+      font-size: 14px;
+      margin-bottom: 10px;
+      line-height: 1.3;
+      letter-spacing: -.01em;
+      color: #111827;
+    }
+    .kpi-label {
+      font-size: 10px;
+      letter-spacing: .08em;
+    }
     .kpi-value {
-      font-size: clamp(28px, 2.3vw, 40px);
-      line-height: .95;
+      font-size: clamp(22px, 1.9vw, 32px);
+      line-height: 1;
       letter-spacing: -.04em;
     }
+    .kpi-foot { font-size: 11px; line-height: 1.45; }
     .iconbox {
-      width: 50px;
-      height: 50px;
-      border-radius: 18px;
-      background: linear-gradient(135deg, rgba(37,99,235,.14), rgba(59,196,255,.18), rgba(215,25,32,.10));
-      box-shadow: inset 0 1px 0 rgba(255,255,255,.7);
+      width: 34px;
+      height: 22px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, rgba(37,99,235,.08), rgba(59,196,255,.14), rgba(215,25,32,.07));
+      border: 1px solid rgba(118, 149, 196, .18);
+      box-shadow: none;
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: .08em;
+      color: #4b6385;
+      text-transform: uppercase;
     }
-    .panel.soft-accent::before { height: 5px; }
+    .delta {
+      padding: 6px 9px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .panel.soft-accent::before { height: 2px; }
     .card:hover, .exec-pill:hover, .panel:hover {
-      transform: translateY(-2px);
-      transition: transform .18s ease, box-shadow .18s ease;
+      transform: none;
+      transition: box-shadow .18s ease;
     }
-    .card:hover, .panel:hover { box-shadow: 0 28px 70px rgba(8, 21, 45, .14); }
+    .card:hover, .panel:hover { box-shadow: 0 18px 42px rgba(8, 21, 45, .10); }
 
     /* Alert styles */
-    .alert-list { display:grid; gap:10px; }
-    .alert-item { display:flex; gap:12px; align-items:flex-start; padding:12px 14px; border-radius:14px; background:rgba(248,250,252,.7); }
-    .alert-item.high { background:rgba(220,38,38,.08); border:1px solid rgba(220,38,38,.2); }
-    .alert-item.medium { background:rgba(245,158,11,.08); border:1px solid rgba(245,158,11,.2); }
-    .alert-item.low { background:rgba(37,99,235,.06); border:1px solid rgba(37,99,235,.15); }
-    .alert-item.success { background:rgba(22,163,74,.08); border:1px solid rgba(22,163,74,.2); }
-    .alert-icon { width:28px; height:28px; display:grid; place-items:center; border-radius:999px; background:#e8eef8; font-size:15px; flex:0 0 auto; }
-    .alert-sub { font-size:12px; color:var(--muted); margin-top:4px; }
+    .alert-list { display:grid; gap:8px; }
+    .alert-item { display:flex; gap:10px; align-items:flex-start; padding:11px 12px; border-radius:12px; background:rgba(248,250,252,.82); border:1px solid var(--border); }
+    .alert-item.high { background:rgba(254,242,242,.78); border:1px solid rgba(220,38,38,.16); }
+    .alert-item.medium { background:rgba(255,247,237,.82); border:1px solid rgba(217,119,6,.16); }
+    .alert-item.low { background:rgba(239,246,255,.72); border:1px solid rgba(37,99,235,.12); }
+    .alert-item.success { background:rgba(240,253,244,.75); border:1px solid rgba(22,163,74,.14); }
+    .alert-icon { width:8px; height:8px; display:grid; place-items:center; border-radius:999px; background:#9ca3af; font-size:0; flex:0 0 auto; margin-top:7px; }
+    .alert-item.high .alert-icon { background:#dc2626; }
+    .alert-item.medium .alert-icon { background:#d97706; }
+    .alert-item.low .alert-icon { background:#9ca3af; }
+    .alert-item.success .alert-icon { background:#16a34a; }
+    .alert-sub { font-size:11px; color:var(--muted); margin-top:3px; }
+    .summary-box { border-radius:14px; padding:12px; min-height: 124px; background:linear-gradient(180deg, rgba(251,253,255,.96), rgba(245,249,255,.92)); border-color: rgba(118, 149, 196, .16); }
+    .summary-box.tall { min-height: 272px; }
+    .score-big { gap: 12px; margin-top: 6px; }
+    .score-number { font-size: 28px; }
+    .score-letter { font-size: 38px; }
+    .mini-card { padding:14px; min-height: 108px; }
+    .mini-label { font-size: 10px; }
+    .mini-value { font-size: 18px; margin: 8px 0 5px; }
+    .mini-note, .subtle, .metric-sub, .exec-foot, .footer-note { font-size: 11px; line-height: 1.45; }
+    .mini-icon { font-size: 18px; }
+    .exec-pill { border-radius: 14px; padding: 12px 14px; box-shadow: none; background:linear-gradient(180deg, rgba(251,253,255,.96), rgba(245,249,255,.92)); border-color: rgba(118, 149, 196, .16); }
+    .exec-label { font-size: 10px; margin-bottom: 4px; }
+    .exec-value { font-size: 18px; }
+    .metric-big { font-size: 24px; }
+    .metric-line { gap: 8px; }
+    .meta-progress { height: 8px; margin: 10px 0; }
+    .list-item { padding:10px 12px; border-radius:14px; }
+    .list-item strong { font-size: 13px; }
+    .list-sub { font-size: 11px; line-height: 1.45; }
+    .training-level { padding:5px 8px; font-size: 10px; }
+    .panel-head { gap:10px; margin-bottom: 12px; }
+    .table-wrap { border-radius: 14px; }
+    table { min-width: 1240px; font-size: 12px; }
+    th, td { padding: 10px 9px; }
+    th { font-size: 10px; letter-spacing:.08em; background:#f7faff; }
+    .pill { padding:5px 8px; font-size:10px; }
+    .empty { padding: 24px; font-size: 12px; }
+    .compare-stat { gap:8px; padding:8px 0; }
+    .insight-item { padding:9px 11px; border-radius:12px; background:linear-gradient(180deg, rgba(251,253,255,.96), rgba(245,249,255,.92)); border:1px solid rgba(118, 149, 196, .16); }
+    .insight-icon { width:8px; height:8px; font-size:0; background:#9ca3af; margin-top:7px; }
 
     @media (max-width: 1240px) {
       .topbar-inner { grid-template-columns: 1fr; }
@@ -402,7 +495,7 @@
       .container { padding: 14px 12px 28px; }
       .topbar-inner { padding: 12px; }
       .brand { align-items:flex-start; }
-      .brand img { width: 110px; }
+      .brand img { width: 104px; }
       .topnav { display:grid; grid-template-columns: 1fr; }
       .toolbar { grid-template-columns: 1fr; }
       .cards-grid, .mini-grid, .summary-panel, .action-grid, .decision-grid { grid-template-columns: 1fr; }
@@ -410,8 +503,10 @@
       .statusbar { align-items:flex-start; }
       .month-chip { padding:8px 11px; }
       .panel, .card { border-radius: 18px; }
-      .kpi-value { font-size: 30px; }
-      .score-letter { font-size: 42px; }
+      .page-title { font-size: 24px; }
+      .decision-value { font-size: 24px; }
+      .kpi-value { font-size: 28px; }
+      .score-letter { font-size: 34px; }
       th, td { padding: 10px 8px; }
       #pageExecutive > section:nth-child(3) > div:nth-child(2),
       #pageExecutive > section:nth-child(4) > div { grid-template-columns: 1fr; }
@@ -486,7 +581,7 @@
       <!-- Alertas Automatizados -->
       <section class="panel soft-accent full-span" style="margin-bottom:18px;" aria-label="Alertas automatizados">
         <div class="panel-head">
-          <h3 class="panel-title" style="margin:0;">⚡ Alertas operacionais</h3>
+          <h3 class="panel-title" style="margin:0;">Alertas operacionais</h3>
           <span class="subtle">Ações prioritárias automáticas</span>
         </div>
         <div class="alert-list" id="alertsList">
@@ -515,27 +610,27 @@
     <section class="layout">
       <div class="cards-grid">
         <article class="card">
-          <div class="kpi-top"><div class="kpi-meta"><div class="kpi-label">Frota analisada</div><div class="kpi-value" id="kpiFrota">-</div></div><div class="iconbox">🚛</div></div>
+          <div class="kpi-top"><div class="kpi-meta"><div class="kpi-label">Frota analisada</div><div class="kpi-value" id="kpiFrota">-</div></div><div class="iconbox">FR</div></div>
           <div class="delta flat" id="deltaFrota">— vs mês anterior</div>
           <div class="kpi-foot">Quantidade de equipamentos no período filtrado</div>
         </article>
         <article class="card">
-          <div class="kpi-top"><div class="kpi-meta"><div class="kpi-label">Consumo médio</div><div class="kpi-value" id="kpiConsumo">-</div></div><div class="iconbox">⛽</div></div>
+          <div class="kpi-top"><div class="kpi-meta"><div class="kpi-label">Consumo médio</div><div class="kpi-value" id="kpiConsumo">-</div></div><div class="iconbox">CM</div></div>
           <div class="delta flat" id="deltaConsumo">— vs mês anterior</div>
           <div class="kpi-foot">km/l da frota no período</div>
         </article>
         <article class="card">
-          <div class="kpi-top"><div class="kpi-meta"><div class="kpi-label">Distância média</div><div class="kpi-value" id="kpiDistancia">-</div></div><div class="iconbox">🛣️</div></div>
+          <div class="kpi-top"><div class="kpi-meta"><div class="kpi-label">Distância média</div><div class="kpi-value" id="kpiDistancia">-</div></div><div class="iconbox">DM</div></div>
           <div class="delta flat" id="deltaDistancia">— vs mês anterior</div>
           <div class="kpi-foot">km por equipamento</div>
         </article>
         <article class="card">
-          <div class="kpi-top"><div class="kpi-meta"><div class="kpi-label">Total km rodado</div><div class="kpi-value" id="kpiKmTotal">-</div></div><div class="iconbox">🛣</div></div>
+          <div class="kpi-top"><div class="kpi-meta"><div class="kpi-label">Total km rodado</div><div class="kpi-value" id="kpiKmTotal">-</div></div><div class="iconbox">KT</div></div>
           <div class="delta flat" id="deltaKmTotal">— vs mês anterior</div>
           <div class="kpi-foot">Soma da distância percorrida no período filtrado</div>
         </article>
         <article class="card">
-          <div class="kpi-top"><div class="kpi-meta"><div class="kpi-label">CO₂ total</div><div class="kpi-value" id="kpiCo2">-</div></div><div class="iconbox">🌿</div></div>
+          <div class="kpi-top"><div class="kpi-meta"><div class="kpi-label">CO₂ total</div><div class="kpi-value" id="kpiCo2">-</div></div><div class="iconbox">CO</div></div>
           <div class="delta flat" id="deltaCo2">— vs mês anterior</div>
           <div class="kpi-foot">toneladas no mês</div>
         </article>
@@ -580,22 +675,22 @@
 
       <div class="action-grid">
         <article class="card action-card">
-          <div class="kpi-top"><div class="kpi-meta"><div class="kpi-label">Meta atingida</div><div class="metric-line"><div class="metric-big" id="metaHitPct">-</div><div class="metric-sub" id="metaHitCount">-</div></div></div><div class="iconbox">META</div></div>
+          <div class="kpi-top"><div class="kpi-meta"><div class="kpi-label">Meta atingida</div><div class="metric-line"><div class="metric-big" id="metaHitPct">-</div><div class="metric-sub" id="metaHitCount">-</div></div></div><div class="iconbox">MT</div></div>
           <div class="delta flat" id="deltaMetaHit">- vs mes anterior</div>
           <div class="kpi-foot">Percentual da frota filtrada no ou acima do alvo de consumo</div>
         </article>
         <article class="card action-card">
-          <div class="kpi-top"><div class="kpi-meta"><div class="kpi-label">Potencial de economia</div><div class="metric-line"><div class="metric-big" id="savingsValue">-</div><div class="metric-sub" id="savingsLiters">-</div></div></div><div class="iconbox">R$</div></div>
+          <div class="kpi-top"><div class="kpi-meta"><div class="kpi-label">Potencial de economia</div><div class="metric-line"><div class="metric-big" id="savingsValue">-</div><div class="metric-sub" id="savingsLiters">-</div></div></div><div class="iconbox">PF</div></div>
           <div class="delta flat" id="deltaSavings">- vs mes anterior</div>
           <div class="kpi-foot" id="savingsValueFoot">Cálculo com diesel médio de R$ 6,30/l</div>
         </article>
         <article class="card action-card">
-          <div class="kpi-top"><div class="kpi-meta"><div class="kpi-label">Equipamentos criticos</div><div class="metric-line"><div class="metric-big" id="criticalCount">-</div><div class="metric-sub" id="criticalPct">-</div></div></div><div class="iconbox">RISCO</div></div>
+          <div class="kpi-top"><div class="kpi-meta"><div class="kpi-label">Equipamentos críticos</div><div class="metric-line"><div class="metric-big" id="criticalCount">-</div><div class="metric-sub" id="criticalPct">-</div></div></div><div class="iconbox">EQ</div></div>
           <div class="delta flat" id="deltaCritical">- vs mes anterior</div>
           <div class="kpi-foot">Nota baixa ou desempenho abaixo da meta no periodo filtrado</div>
         </article>
         <article class="card action-card">
-          <div class="kpi-top"><div class="kpi-meta"><div class="kpi-label">Scania Driver Support (%)</div><div class="metric-line"><div class="metric-big" id="supportExecutive">-</div><div class="metric-sub">media</div></div></div><div class="iconbox">SDS</div></div>
+          <div class="kpi-top"><div class="kpi-meta"><div class="kpi-label">Scania Driver Support (%)</div><div class="metric-line"><div class="metric-big" id="supportExecutive">-</div><div class="metric-sub">média</div></div></div><div class="iconbox">SD</div></div>
           <div class="delta flat" id="deltaSupportExecutive">- vs mes anterior</div>
           <div class="kpi-foot">Aderencia media ao suporte do motorista no periodo filtrado</div>
         </article>
@@ -603,26 +698,55 @@
 
       <div class="action-grid">
         <article class="card action-card">
-          <div class="kpi-top"><div class="kpi-meta"><div class="kpi-label">Consumo em marcha lenta</div><div class="metric-line"><div class="metric-big" id="idleLiters">-</div><div class="metric-sub">litros</div></div></div><div class="iconbox">LENTA</div></div>
+          <div class="kpi-top"><div class="kpi-meta"><div class="kpi-label">Consumo em marcha lenta</div><div class="metric-line"><div class="metric-big" id="idleLiters">-</div><div class="metric-sub">litros</div></div></div><div class="iconbox">ML</div></div>
           <div class="delta flat" id="deltaIdleLiters">- vs mes anterior</div>
           <div class="kpi-foot">Estimativa operacional baseada no percentual medio de marcha lenta</div>
         </article>
         <article class="card action-card">
-          <div class="kpi-top"><div class="kpi-meta"><div class="kpi-label">Marcha lenta acima de 20%</div><div class="metric-line"><div class="metric-big" id="idleAboveTarget">-</div><div class="metric-sub">equip.</div></div></div><div class="iconbox">ML</div></div>
+          <div class="kpi-top"><div class="kpi-meta"><div class="kpi-label">Marcha lenta acima de 20%</div><div class="metric-line"><div class="metric-big" id="idleAboveTarget">-</div><div class="metric-sub">equip.</div></div></div><div class="iconbox">AM</div></div>
           <div class="delta flat" id="deltaIdleAboveTarget">- vs mes anterior</div>
           <div class="kpi-foot">Quantidade de equipamentos acima da meta operacional de marcha lenta</div>
         </article>
         <article class="card action-card">
-          <div class="kpi-top"><div class="kpi-meta"><div class="kpi-label">Motoristas abaixo da meta</div><div class="metric-line"><div class="metric-big" id="driversBelowMeta">-</div><div class="metric-sub">condutores</div></div></div><div class="iconbox">COND</div></div>
+          <div class="kpi-top"><div class="kpi-meta"><div class="kpi-label">Motoristas abaixo da meta</div><div class="metric-line"><div class="metric-big" id="driversBelowMeta">-</div><div class="metric-sub">condutores</div></div></div><div class="iconbox">MB</div></div>
           <div class="delta flat" id="deltaDriversBelowMeta">- vs mes anterior</div>
           <div class="kpi-foot">Motoristas com consumo abaixo da meta no mes selecionado</div>
         </article>
         <article class="card action-card">
-          <div class="kpi-top"><div class="kpi-meta"><div class="kpi-label">Excesso de velocidade</div><div class="metric-line"><div class="metric-big" id="speedExecutive">-</div><div class="metric-sub">medio</div></div></div><div class="iconbox">VEL</div></div>
+          <div class="kpi-top"><div class="kpi-meta"><div class="kpi-label">Excesso de velocidade</div><div class="metric-line"><div class="metric-big" id="speedExecutive">-</div><div class="metric-sub">médio</div></div></div><div class="iconbox">EV</div></div>
           <div class="delta flat" id="deltaSpeedExecutive">- vs mes anterior</div>
           <div class="kpi-foot">Indicador mantido no painel como risco operacional e de seguranca</div>
         </article>
       </div>
+
+      <section class="panel soft-accent full-span" style="margin-top:18px;" aria-label="Gestão de custos de combustível">
+        <div class="panel-head">
+          <h3 class="panel-title" style="margin:0;">Gestão de custos de combustível</h3>
+          <span class="subtle" id="costPanelSubtitle">Valores estimados com o diesel médio informado</span>
+        </div>
+        <div class="executive-strip">
+          <div class="exec-pill">
+            <div class="exec-label">Custo de combustível</div>
+            <div class="exec-value" id="costFuel">-</div>
+            <div class="exec-foot" id="costFuelFoot">-</div>
+          </div>
+          <div class="exec-pill">
+            <div class="exec-label">Desperdício (abaixo da meta)</div>
+            <div class="exec-value" id="costWaste" style="color:var(--danger);">-</div>
+            <div class="exec-foot" id="costWasteFoot">-</div>
+          </div>
+          <div class="exec-pill">
+            <div class="exec-label">Custo em marcha lenta</div>
+            <div class="exec-value" id="costIdle" style="color:var(--warning);">-</div>
+            <div class="exec-foot" id="costIdleFoot">-</div>
+          </div>
+          <div class="exec-pill">
+            <div class="exec-label">Economia realizada</div>
+            <div class="exec-value" id="costSaved" style="color:var(--success);">-</div>
+            <div class="exec-foot" id="costSavedFoot">-</div>
+          </div>
+        </div>
+      </section>
 
       <div class="stack-grid">
         <section class="panel">
@@ -648,25 +772,25 @@
 
       <div class="mini-grid">
         <section class="panel mini-card">
-          <div class="mini-top"><div class="mini-label">Marcha lenta</div><div class="mini-icon">⏱️</div></div>
+          <div class="mini-top"><div class="mini-label">Marcha lenta</div><div class="mini-icon"></div></div>
           <div class="mini-value" id="indMarcha">-</div>
           <div class="delta flat" id="deltaMarcha">— vs mês anterior</div>
           <div class="mini-note">Média percentual do mês</div>
         </section>
         <section class="panel mini-card">
-          <div class="mini-top"><div class="mini-label">Inércia</div><div class="mini-icon">🌀</div></div>
+          <div class="mini-top"><div class="mini-label">Inércia</div><div class="mini-icon"></div></div>
           <div class="mini-value" id="indInercia">-</div>
           <div class="delta flat" id="deltaInercia">— vs mês anterior</div>
           <div class="mini-note">Veículo engrenado sem injeção</div>
         </section>
         <section class="panel mini-card">
-          <div class="mini-top"><div class="mini-label">Excesso de velocidade</div><div class="mini-icon">⚠️</div></div>
+          <div class="mini-top"><div class="mini-label">Excesso de velocidade</div><div class="mini-icon"></div></div>
           <div class="mini-value" id="indExcesso">-</div>
           <div class="delta flat" id="deltaExcesso">— vs mês anterior</div>
           <div class="mini-note">Média percentual do mês</div>
         </section>
         <section class="panel mini-card">
-          <div class="mini-top"><div class="mini-label">Scania Driver Support (%)</div><div class="mini-icon">🎛️</div></div>
+          <div class="mini-top"><div class="mini-label">Scania Driver Support (%)</div><div class="mini-icon"></div></div>
           <div class="mini-value" id="indSupport">-</div>
           <div class="delta flat" id="deltaSupport">— vs mês anterior</div>
           <div class="mini-note">Utilização média do suporte do motorista</div>

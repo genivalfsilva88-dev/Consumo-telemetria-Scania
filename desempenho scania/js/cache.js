@@ -72,6 +72,10 @@ export class CacheManager {
     try {
       let cacheEntry;
 
+      if (this.useIndexedDB && !this.db) {
+        await this.initDB();
+      }
+
       if (this.useIndexedDB && this.db) {
         cacheEntry = await this._loadFromIndexedDB();
       }
@@ -97,6 +101,10 @@ export class CacheManager {
    */
   async clear() {
     try {
+      if (this.useIndexedDB && !this.db) {
+        await this.initDB();
+      }
+
       if (this.useIndexedDB && this.db) {
         await this._clearIndexedDB();
       }

@@ -1,5 +1,5 @@
 import { CONFIG, state } from './config.js';
-import { formatNumber, formatInt, formatMoney, generateAlerts, forecastTrend } from './calculations.js';
+import { formatNumber, formatInt, formatMoney, formatCurrencyInput, currentDieselPrice, generateAlerts, forecastTrend } from './calculations.js';
 
 /**
  * Export utilities for CSV and PNG
@@ -13,6 +13,8 @@ export class ExportManager {
       alert('Não há dados para exportar');
       return;
     }
+
+    const diesel = currentDieselPrice();
 
     const headers = [
       'Equipamento',
@@ -29,12 +31,19 @@ export class ExportManager {
       'Excesso velocidade (%)',
       'Freadas bruscas (n/100km)',
       'CO₂ (ton)',
+      'Litros consumidos',
+      'Custo combustível (R$)',
+      'Litros desperdiçados',
+      'Desperdício (R$)',
+      'Litros marcha lenta',
+      'Custo marcha lenta (R$)',
       'Mês'
     ];
 
     const csvRows = [headers.join(';')];
 
     rows.forEach(row => {
+      const c = this._rowCosts(row, diesel);
       const values = [
         row.equipamento,
         row.placa,
@@ -50,6 +59,12 @@ export class ExportManager {
         formatNumber(row.excessoVelocidade, 1),
         formatNumber(row.freadasBruscas, 2),
         formatNumber(row.co2, 1),
+        formatNumber(c.fuelLiters, 1),
+        formatNumber(c.fuelCost, 2),
+        formatNumber(c.wasteLiters, 1),
+        formatNumber(c.wasteCost, 2),
+        formatNumber(c.idleLiters, 1),
+        formatNumber(c.idleCost, 2),
         row.mes || month
       ];
       csvRows.push(values.join(';'));
@@ -65,6 +80,26 @@ export class ExportManager {
     link.click();
     
     URL.revokeObjectURL(url);
+  }
+
+  /**
+   * Custos estimados de um equipamento (litros e R$)
+   */
+  _rowCosts(row, diesel) {
+    const fuelLiters = row.consumo > 0 && row.distancia > 0 ? row.distancia / row.consumo : 0;
+    const idleLiters = fuelLiters > 0 && row.marchaLenta > 0 ? fuelLiters * (row.marchaLenta / 100) : 0;
+    let wasteLiters = 0;
+    if (row.meta > 0 && row.distancia > 0 && row.consumo > 0 && row.consumo < row.meta) {
+      wasteLiters = Math.max(0, (row.distancia / row.consumo) - (row.distancia / row.meta));
+    }
+    return {
+      fuelLiters,
+      fuelCost: fuelLiters * diesel,
+      idleLiters,
+      idleCost: idleLiters * diesel,
+      wasteLiters,
+      wasteCost: wasteLiters * diesel
+    };
   }
 
   /**
@@ -137,6 +172,13 @@ META DE CONSUMO
 • Meta atingida: ${formatNumber(summary.metaHitPct, 1)}% da frota
 • Equipamentos na meta: ${formatInt(summary.metaHitCount)} de ${formatInt(summary.validMetaCount)}
 • Potencial de economia: ${formatInt(summary.savingsLiters)} litros (R$ ${formatMoney(summary.savingsValue)})
+
+GESTÃO DE CUSTOS (diesel médio R$ ${formatCurrencyInput(summary.dieselPrice)}/l)
+---------------
+• Custo total de combustível: R$ ${formatMoney(summary.fuelCost)} (${formatInt(summary.fuelLiters)} litros)
+• Desperdício abaixo da meta: R$ ${formatMoney(summary.wasteCost)} (${formatInt(summary.wasteLiters)} litros • ${formatNumber(summary.wastePctOfCost, 1)}% do custo)
+• Custo em marcha lenta: R$ ${formatMoney(summary.idleCost)} (${formatInt(summary.idleLiters)} litros)
+• Economia realizada acima da meta: R$ ${formatMoney(summary.savedCost)} (${formatInt(summary.savedLiters)} litros)
 
 INDICADORES DE COMPORTAMENTO
 ----------------------------

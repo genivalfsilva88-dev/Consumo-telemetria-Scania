@@ -23,6 +23,11 @@ import { exportManager } from './export.js';
 export class DashboardUI {
   constructor() {
     this.dataLoader = new DataLoader();
+    this.autoSyncHandle = null;
+    this.syncInFlight = null;
+    this.lastSyncAt = 0;
+    this.boundVisibilitySync = null;
+    this.boundFocusSync = null;
   }
 
   /**
@@ -49,6 +54,11 @@ export class DashboardUI {
       
       // Show cache status
       this._showCacheStatus();
+      this._setupAutoSync();
+
+      if (this.dataLoader.lastLoadSource === 'cache') {
+        this.syncWithSource({ reason: 'Validando atualizações da base...' });
+      }
       
     } catch (error) {
       console.error(error);
@@ -63,7 +73,53 @@ export class DashboardUI {
   async refresh() {
     await cacheManager.clear();
     this.dataLoader = new DataLoader();
+    this.lastSyncAt = 0;
     await this.init();
+  }
+
+  /**
+   * Revalidate source data in background
+   */
+  async syncWithSource({ reason = 'Sincronizando base...', force = false } = {}) {
+    const now = Date.now();
+    if (!force && now - this.lastSyncAt < CONFIG.sync.minIntervalMs) {
+      return this.syncInFlight;
+    }
+
+    if (this.syncInFlight) {
+      return this.syncInFlight;
+    }
+
+    const previousFingerprint = this.dataLoader.getStateFingerprint();
+    this.lastSyncAt = now;
+    this._updateLoadingStatus(reason);
+
+    this.syncInFlight = (async () => {
+      try {
+        await this.dataLoader.refreshFromSheets();
+        const nextFingerprint = this.dataLoader.getStateFingerprint();
+        const hasChanges = previousFingerprint !== nextFingerprint;
+
+        this._showCacheStatus();
+
+        if (hasChanges) {
+          this._populateMonthSelect();
+          this._populateDriverSelect();
+          this._populateFleetSelect();
+          this.renderDashboard();
+          this._updateLoadingStatus('Base sincronizada agora');
+        } else {
+          this._updateLastBadge(state.selectedMonth);
+        }
+      } catch (error) {
+        console.warn('Background sync failed:', error);
+        this._updateLoadingStatus('Falha ao sincronizar a base');
+      } finally {
+        this.syncInFlight = null;
+      }
+    })();
+
+    return this.syncInFlight;
   }
 
   /**
@@ -87,6 +143,7 @@ export class DashboardUI {
     this._renderComparisonPanel(month, summary, prevSummary, prevMonth);
     this._renderAlertsPanel();
     this._renderActionCards(summary);
+    this._renderCostPanel(summary, prevSummary);
     this._renderTrendChart();
     this._renderRankingChart(month);
     this._renderGradeDistribution(month);
@@ -144,9 +201,38 @@ export class DashboardUI {
 
   _showCacheStatus() {
     const badge = document.getElementById('cacheStatus');
-    if (badge && cacheManager.isFresh()) {
+    if (!badge) return;
+
+    if (cacheManager.isFresh()) {
       badge.textContent = cacheManager.getAgeText();
       badge.style.display = 'inline-flex';
+      return;
+    }
+
+    badge.style.display = 'none';
+  }
+
+  _setupAutoSync() {
+    if (!this.autoSyncHandle) {
+      this.autoSyncHandle = window.setInterval(() => {
+        this.syncWithSource({ reason: 'Sincronizando base...' });
+      }, CONFIG.sync.autoRefreshMinutes * 60 * 1000);
+    }
+
+    if (!this.boundVisibilitySync) {
+      this.boundVisibilitySync = () => {
+        if (!document.hidden) {
+          this.syncWithSource({ reason: 'Verificando mudanças na base...' });
+        }
+      };
+      document.addEventListener('visibilitychange', this.boundVisibilitySync);
+    }
+
+    if (!this.boundFocusSync) {
+      this.boundFocusSync = () => {
+        this.syncWithSource({ reason: 'Verificando mudanças na base...' });
+      };
+      window.addEventListener('focus', this.boundFocusSync);
     }
   }
 
@@ -375,15 +461,17 @@ export class DashboardUI {
     const metaFill = document.getElementById('metaFill');
     const metaText = document.getElementById('metaText');
 
-    if (realValue) realValue.textContent = `${formatNumber(summary.consumoMedio, 2)} km/l`;
+    // Compara consumo e meta sobre o mesmo universo (apenas equipamentos com meta cadastrada)
+    const realCompare = summary.metaMedia > 0 ? summary.consumoMedioMeta : summary.consumoMedio;
+    if (realValue) realValue.textContent = `${formatNumber(realCompare, 2)} km/l`;
     if (metaValue) metaValue.textContent = summary.metaMedia ? `${formatNumber(summary.metaMedia, 2)} km/l` : 'Sem meta';
+    const metaPerf = summary.metaMedia > 0 ? (realCompare / summary.metaMedia) * 100 : 0;
     if (metaFill) {
-      const perf = summary.metaMedia > 0 ? (summary.consumoMedio / summary.metaMedia) * 100 : 0;
-      metaFill.style.width = `${Math.max(0, Math.min(perf, 100))}%`;
+      metaFill.style.width = `${Math.max(0, Math.min(metaPerf, 100))}%`;
     }
     if (metaText) {
       metaText.textContent = summary.metaMedia > 0
-        ? `${summary.consumoMedio >= summary.metaMedia ? 'Meta atingida' : 'Abaixo da meta'} (${formatNumber(summary.metaMedia > 0 ? (summary.consumoMedio / summary.metaMedia) * 100 : 0, 1)}%) • Scania Driver Support ${formatNumber(summary.supportUsageMedio, 1)}%`
+        ? `${realCompare >= summary.metaMedia ? 'Meta atingida' : 'Abaixo da meta'} (${formatNumber(metaPerf, 1)}%) • Scania Driver Support ${formatNumber(summary.supportUsageMedio, 1)}%`
         : `Sem meta cadastrada • Scania Driver Support ${formatNumber(summary.supportUsageMedio, 1)}%`;
     }
 
@@ -488,15 +576,14 @@ export class DashboardUI {
     if (!target) return;
 
     if (state.alerts.length === 0) {
-      target.innerHTML = '<div class="alert-item success"><span class="alert-icon">✓</span><div><strong>Sem alertas críticos</strong><div class="alert-sub">Operação dentro dos parâmetros esperados</div></div></div>';
+      target.innerHTML = '<div class="alert-item success"><span class="alert-icon"></span><div><strong>Sem alertas críticos</strong><div class="alert-sub">Operação dentro dos parâmetros esperados</div></div></div>';
       return;
     }
 
     target.innerHTML = state.alerts.map(alert => {
       const severityClass = alert.severity === 'high' ? 'high' : alert.severity === 'medium' ? 'medium' : 'low';
-      const icon = alert.severity === 'high' ? '⚠️' : alert.severity === 'medium' ? '⚡' : 'ℹ️';
       return `<div class="alert-item ${severityClass}">
-        <span class="alert-icon">${icon}</span>
+        <span class="alert-icon"></span>
         <div>
           <strong>${alert.message}</strong>
           <div class="alert-sub">Ação: ${alert.action}</div>
@@ -539,6 +626,29 @@ export class DashboardUI {
     this._setDelta('deltaIdleAboveTarget', summary.idleAboveTargetCount, prevSummary.idleAboveTargetCount, false, '', 0);
     this._setDelta('deltaDriversBelowMeta', summary.driversBelowMetaCount, prevSummary.driversBelowMetaCount, false, '', 0);
     this._setDelta('deltaSpeedExecutive', summary.excessoVelocidade, prevSummary.excessoVelocidade, false, ' p.p.', 1);
+  }
+
+  _renderCostPanel(summary, prevSummary) {
+    const setEl = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
+    const diesel = formatCurrencyInput(summary.dieselPrice);
+
+    setEl('costPanelSubtitle', `Valores estimados com diesel médio de R$ ${diesel}/l`);
+
+    // Custo total de combustível do período
+    setEl('costFuel', `R$ ${formatMoney(summary.fuelCost)}`);
+    setEl('costFuelFoot', `${formatInt(summary.fuelLiters)} litros consumidos no período`);
+
+    // Desperdício por baixa eficiência (economia potencial se atingissem a meta)
+    setEl('costWaste', `R$ ${formatMoney(summary.wasteCost)}`);
+    setEl('costWasteFoot', `${formatInt(summary.wasteLiters)} litros • ${formatNumber(summary.wastePctOfCost, 1)}% do custo de combustível`);
+
+    // Custo do combustível queimado em marcha lenta
+    setEl('costIdle', `R$ ${formatMoney(summary.idleCost)}`);
+    setEl('costIdleFoot', `${formatInt(summary.idleLiters)} litros estimados parados em marcha lenta`);
+
+    // Economia já realizada pelos equipamentos acima da meta
+    setEl('costSaved', `R$ ${formatMoney(summary.savedCost)}`);
+    setEl('costSavedFoot', `${formatInt(summary.savedLiters)} litros economizados acima da meta`);
   }
 
   _renderTrendChart() {

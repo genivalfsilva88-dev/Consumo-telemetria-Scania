@@ -11,11 +11,25 @@ export const CONFIG = {
   ],
   metaSheetName: 'meta',
 
+  // Driver note scoring (weighted, escalas normalizadas para 0-100)
+  scoring: {
+    weights: { consumo: 0.5, support: 0.2, marchaLenta: 0.2, inercia: 0.1 },
+    idleTargetPercent: 20,      // até este % de marcha lenta a nota da componente é 100
+    inertiaTargetPercent: 12,   // % de inércia (engrenado sem injeção) considerado ideal = 100
+    consumoMaxScore: 100        // teto da componente de consumo vs meta
+  },
+
   // Cache configuration
   cache: {
     enabled: true,
     ttlMinutes: 30,
     key: 'ziran_dashboard_cache_v2'
+  },
+
+  // Background sync
+  sync: {
+    autoRefreshMinutes: 5,
+    minIntervalMs: 15000
   },
 
   // Retry configuration
@@ -30,6 +44,7 @@ export const CONFIG = {
     consumptionMetaPercent: 85,
     idlePercentThreshold: 25,
     criticalScoreThreshold: 60,
+    criticalConsumoRatio: 0.9,   // crítico se consumo < 90% da meta (margem para evitar excesso de "críticos")
     supportUsageLowThreshold: 60,
     speedAlertThreshold: 3
   },

@@ -74,6 +74,7 @@ export function computeMonthSummary(rows) {
     return {
       frota: 0,
       consumoMedio: 0,
+      consumoMedioMeta: 0,
       distanciaMedia: 0,
       totalKm: 0,
       co2Total: 0,
@@ -87,6 +88,14 @@ export function computeMonthSummary(rows) {
       savingsLiters: 0,
       savingsValue: 0,
       dieselPrice,
+      fuelLiters: 0,
+      fuelCost: 0,
+      wasteLiters: 0,
+      wasteCost: 0,
+      idleCost: 0,
+      savedLiters: 0,
+      savedCost: 0,
+      wastePctOfCost: 0,
       criticalCount: 0,
       criticalPct: 0,
       grade: 'E',
@@ -109,26 +118,43 @@ export function computeMonthSummary(rows) {
   const supportLowRows = rows.filter(r => r.supportUsage < 60);
   const speedAlertRows = rows.filter(r => r.excessoVelocidade > 3);
 
+  // Litros totais consumidos no período (distância / eficiência)
+  const fuelLiters = rows.reduce((acc, r) => {
+    if (!(r.consumo > 0) || !(r.distancia > 0)) return acc;
+    return acc + (r.distancia / r.consumo);
+  }, 0);
+
+  // Litros queimados em marcha lenta (estimativa proporcional ao % de marcha lenta)
   const idleLiters = rows.reduce((acc, r) => {
     if (!(r.consumo > 0) || !(r.distancia > 0) || !(r.marchaLenta > 0)) return acc;
     return acc + ((r.distancia / r.consumo) * (r.marchaLenta / 100));
   }, 0);
 
-  const savingsLiters = validMetaRows.reduce((acc, r) => {
-    if (!r.consumo || !r.meta || r.consumo >= r.meta) return acc;
-    const atual = r.distancia > 0 ? r.distancia / r.consumo : 0;
-    const alvo = r.distancia > 0 ? r.distancia / r.meta : 0;
+  // Litros desperdiçados por eficiência abaixo da meta (economia potencial se atingissem a meta)
+  const wasteLiters = belowMetaRows.reduce((acc, r) => {
+    if (!(r.distancia > 0)) return acc;
+    const atual = r.distancia / r.consumo;
+    const alvo = r.distancia / r.meta;
     return acc + Math.max(0, atual - alvo);
+  }, 0);
+
+  // Litros economizados por quem roda acima da meta (economia já realizada)
+  const savedLiters = metaHitRows.reduce((acc, r) => {
+    if (!(r.distancia > 0)) return acc;
+    const atual = r.distancia / r.consumo;
+    const alvo = r.distancia / r.meta;
+    return acc + Math.max(0, alvo - atual);
   }, 0);
 
   const criticalRows = rows.filter(r =>
     r.score < CONFIG.alerts.criticalScoreThreshold ||
-    (r.meta > 0 && r.consumo < r.meta)
+    (r.meta > 0 && r.consumo < r.meta * CONFIG.alerts.criticalConsumoRatio)
   );
 
   return {
     frota: rows.length,
     consumoMedio: avg(rows, 'consumo'),
+    consumoMedioMeta: avg(validMetaRows, 'consumo'),
     distanciaMedia: avg(rows, 'distancia'),
     totalKm: sum(rows, 'distancia'),
     co2Total: sum(rows, 'co2'),
@@ -139,9 +165,18 @@ export function computeMonthSummary(rows) {
     metaHitCount: metaHitRows.length,
     validMetaCount: validMetaRows.length,
     metaBelowCount: belowMetaRows.length,
-    savingsLiters,
-    savingsValue: savingsLiters * dieselPrice,
+    savingsLiters: wasteLiters,
+    savingsValue: wasteLiters * dieselPrice,
     dieselPrice,
+    // Bloco financeiro (R$) para gestão de custos
+    fuelLiters,
+    fuelCost: fuelLiters * dieselPrice,
+    wasteLiters,
+    wasteCost: wasteLiters * dieselPrice,
+    idleCost: idleLiters * dieselPrice,
+    savedLiters,
+    savedCost: savedLiters * dieselPrice,
+    wastePctOfCost: fuelLiters > 0 ? (wasteLiters / fuelLiters) * 100 : 0,
     criticalCount: criticalRows.length,
     criticalPct: rows.length ? (criticalRows.length / rows.length) * 100 : 0,
     grade: gradeFromScore(avg(rows, 'score')),
@@ -257,20 +292,31 @@ export function deltaInfo(current, previous, betterWhenHigher = true, unit = '',
  */
 export function forecastTrend(data, monthsAhead = 2) {
   if (data.length < 2) return [];
-  
+
+  // Regressão linear por mínimos quadrados sobre todos os pontos (x = 0..n-1)
+  const n = data.length;
+  const xs = data.map((_, i) => i);
+  const meanX = xs.reduce((s, x) => s + x, 0) / n;
+  const meanY = data.reduce((s, y) => s + y, 0) / n;
+
+  let num = 0;
+  let den = 0;
+  for (let i = 0; i < n; i++) {
+    num += (xs[i] - meanX) * (data[i] - meanY);
+    den += (xs[i] - meanX) ** 2;
+  }
+  const slope = den === 0 ? 0 : num / den;
+  const intercept = meanY - slope * meanX;
+
   const forecasts = [];
-  const lastValue = data[data.length - 1];
-  const firstValue = data[0];
-  const slope = (lastValue - firstValue) / (data.length - 1);
-  
   for (let i = 1; i <= monthsAhead; i++) {
-    const forecasted = lastValue + (slope * i);
+    const x = (n - 1) + i;
     forecasts.push({
-      value: Math.max(0, forecasted),
+      value: Math.max(0, intercept + slope * x),
       month: i
     });
   }
-  
+
   return forecasts;
 }
 

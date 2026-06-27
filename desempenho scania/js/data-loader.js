@@ -8,6 +8,7 @@ export class DataLoader {
   constructor() {
     this.loadingPromise = null;
     this.loadedMonths = new Set();
+    this.lastLoadSource = 'unknown';
   }
 
   /**
@@ -19,23 +20,19 @@ export class DataLoader {
     }
 
     this.loadingPromise = (async () => {
-      // Try cache first
-      if (CONFIG.cache.enabled && cacheManager.isFresh()) {
+      // Try persisted cache first
+      if (CONFIG.cache.enabled) {
         const cachedData = await cacheManager.load();
         if (cachedData) {
           this._restoreState(cachedData);
+          this.lastLoadSource = 'cache';
           return cachedData;
         }
       }
 
       // Load from Google Sheets
-      const data = await this._loadFromSheets();
+      const data = await this.refreshFromSheets();
       
-      // Save to cache
-      if (CONFIG.cache.enabled) {
-        await cacheManager.save(this._extractState());
-      }
-
       return data;
     })();
 
@@ -64,6 +61,20 @@ export class DataLoader {
       state.monthData[month] = [];
       return [];
     }
+  }
+
+  /**
+   * Force refresh from Google Sheets and update cache
+   */
+  async refreshFromSheets() {
+    const data = await this._loadFromSheets();
+
+    if (CONFIG.cache.enabled) {
+      await cacheManager.save(this._extractState());
+    }
+
+    this.lastLoadSource = 'sheets';
+    return data;
   }
 
   /**
@@ -242,6 +253,13 @@ export class DataLoader {
     state.metaMap = new Map(cachedData.metaMap || []);
     CONFIG.monthNames.forEach(m => this.loadedMonths.add(m));
   }
+
+  /**
+   * Lightweight state fingerprint for sync detection
+   */
+  getStateFingerprint() {
+    return JSON.stringify(this._extractState());
+  }
 }
 
 // Utility functions
@@ -342,30 +360,38 @@ export function gradeFromScore(score) {
 }
 
 export function computeDriverNote({ consumo, meta, supportUsage, marchaLenta, inercia }) {
-  const components = [
-    computeConsumptionScore(consumo, meta),
-    clamp(supportUsage),
-    computeIdleScore(marchaLenta),
-    computeInertiaScore(inercia)
-  ].filter(v => v != null);
-  
-  return components.length ? avg(components.map(v => ({ value: v })), 'value') : 0;
+  const w = CONFIG.scoring.weights;
+  const parts = [
+    { score: computeConsumptionScore(consumo, meta), weight: w.consumo },
+    { score: supportUsage >= 0 ? clamp(supportUsage) : null, weight: w.support },
+    { score: computeIdleScore(marchaLenta), weight: w.marchaLenta },
+    { score: computeInertiaScore(inercia), weight: w.inercia }
+  ].filter(p => p.score != null);
+
+  if (!parts.length) return 0;
+
+  // Média ponderada com renormalização dos pesos disponíveis
+  const totalWeight = parts.reduce((s, p) => s + p.weight, 0) || 1;
+  return parts.reduce((s, p) => s + p.score * p.weight, 0) / totalWeight;
 }
 
 function computeConsumptionScore(consumo, meta) {
   if (!(meta > 0)) return null;
-  return clamp((consumo / meta) * 100);
+  return clamp((consumo / meta) * 100, 0, CONFIG.scoring.consumoMaxScore);
 }
 
 function computeIdleScore(marchaLenta) {
   if (!(marchaLenta >= 0)) return null;
-  if (marchaLenta <= 20) return 100;
-  return clamp((20 / marchaLenta) * 100);
+  const target = CONFIG.scoring.idleTargetPercent;
+  if (marchaLenta <= target) return 100;
+  return clamp((target / marchaLenta) * 100);
 }
 
+// Inércia (engrenado sem injeção) é positiva: normaliza contra a meta de inércia
 function computeInertiaScore(inercia) {
   if (!(inercia >= 0)) return null;
-  return clamp(inercia);
+  const target = CONFIG.scoring.inertiaTargetPercent || 12;
+  return clamp((inercia / target) * 100);
 }
 
 function clamp(value, min = 0, max = 100) {

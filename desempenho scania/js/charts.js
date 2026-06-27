@@ -9,6 +9,146 @@ export class ChartManager {
     this.charts = {};
   }
 
+  _withBaseOptions(options) {
+    const base = {
+      chart: {
+        fontFamily: 'Manrope, "Segoe UI", sans-serif',
+        foreColor: '#5b7190',
+        animations: { easing: 'easeinout', speed: 260 }
+      },
+      legend: {
+        position: 'top',
+        horizontalAlign: 'left',
+        fontSize: '11px',
+        fontWeight: 600,
+        labels: { colors: '#5b7190' },
+        itemMargin: { horizontal: 10, vertical: 4 }
+      },
+      dataLabels: {
+        style: { fontSize: '10px', fontWeight: 600 },
+        background: { enabled: false }
+      },
+      grid: {
+        borderColor: 'rgba(148, 163, 184, .18)',
+        strokeDashArray: 4,
+        padding: { left: 4, right: 8 }
+      },
+      tooltip: {
+        theme: 'light',
+        style: { fontSize: '12px' }
+      },
+      xaxis: {
+        labels: { style: { fontSize: '11px', colors: '#5b7190' } },
+        axisBorder: { show: false },
+        axisTicks: { show: false }
+      },
+      yaxis: {
+        labels: { style: { fontSize: '11px', colors: '#5b7190' } }
+      },
+      states: {
+        hover: { filter: { type: 'lighten', value: 0.03 } },
+        active: { filter: { type: 'none' } }
+      }
+    };
+
+    const baseYaxis = base.yaxis;
+    const mergedYaxis = Array.isArray(options.yaxis)
+      ? options.yaxis.map(axis => ({
+          ...baseYaxis,
+          ...axis,
+          labels: {
+            ...baseYaxis.labels,
+            ...axis.labels,
+            style: {
+              ...baseYaxis.labels.style,
+              ...(axis.labels?.style || {})
+            }
+          }
+        }))
+      : {
+          ...baseYaxis,
+          ...(options.yaxis || {}),
+          labels: {
+            ...baseYaxis.labels,
+            ...(options.yaxis?.labels || {}),
+            style: {
+              ...baseYaxis.labels.style,
+              ...(options.yaxis?.labels?.style || {})
+            }
+          }
+        };
+
+    return {
+      ...base,
+      ...options,
+      chart: {
+        ...base.chart,
+        ...(options.chart || {})
+      },
+      legend: {
+        ...base.legend,
+        ...(options.legend || {}),
+        labels: {
+          ...base.legend.labels,
+          ...(options.legend?.labels || {})
+        },
+        itemMargin: {
+          ...base.legend.itemMargin,
+          ...(options.legend?.itemMargin || {})
+        }
+      },
+      dataLabels: {
+        ...base.dataLabels,
+        ...(options.dataLabels || {}),
+        style: {
+          ...base.dataLabels.style,
+          ...(options.dataLabels?.style || {})
+        },
+        background: {
+          ...base.dataLabels.background,
+          ...(options.dataLabels?.background || {})
+        }
+      },
+      grid: {
+        ...base.grid,
+        ...(options.grid || {}),
+        padding: {
+          ...base.grid.padding,
+          ...(options.grid?.padding || {})
+        }
+      },
+      tooltip: {
+        ...base.tooltip,
+        ...(options.tooltip || {}),
+        style: {
+          ...base.tooltip.style,
+          ...(options.tooltip?.style || {})
+        }
+      },
+      xaxis: {
+        ...base.xaxis,
+        ...(options.xaxis || {}),
+        labels: {
+          ...base.xaxis.labels,
+          ...(options.xaxis?.labels || {}),
+          style: {
+            ...base.xaxis.labels.style,
+            ...(options.xaxis?.labels?.style || {})
+          }
+        },
+        axisBorder: {
+          ...base.xaxis.axisBorder,
+          ...(options.xaxis?.axisBorder || {})
+        },
+        axisTicks: {
+          ...base.xaxis.axisTicks,
+          ...(options.xaxis?.axisTicks || {})
+        }
+      },
+      yaxis: mergedYaxis
+    };
+  }
+
   /**
    * Destroy all charts
    */
@@ -42,7 +182,7 @@ export class ChartManager {
     const options = {
       chart: {
         type: 'line',
-        height: 320,
+        height: 296,
         toolbar: { show: false },
         zoom: { enabled: false }
       },
@@ -60,16 +200,16 @@ export class ChartManager {
           data: filteredData.map(x => Number((x.score || 0).toFixed(1)))
         }
       ],
-      stroke: { curve: 'smooth', width: [4, 2, 3], dashArray: [0, 6, 0] },
+      stroke: { curve: 'smooth', width: [3, 2, 2.5], dashArray: [0, 6, 0] },
       colors: ['#2563eb', '#16a34a', '#d71920'],
       xaxis: { categories: filteredData.map(x => (x.month || '').slice(0, 3)) },
       yaxis: [
-        { title: { text: 'km/l' } },
-        { opposite: true, title: { text: 'Nota' } }
+        { seriesName: 'Consumo medio', title: { text: 'km/l', style: { fontSize: '11px', fontWeight: 600 } } },
+        { seriesName: 'Meta media', show: false },
+        { seriesName: 'Nota media', opposite: true, min: 0, max: 100, title: { text: 'Nota', style: { fontSize: '11px', fontWeight: 600 } } }
       ],
       dataLabels: { enabled: false },
       legend: { position: 'top' },
-      grid: { borderColor: '#e5e7eb' },
       tooltip: { shared: true }
     };
 
@@ -81,11 +221,11 @@ export class ChartManager {
    */
   renderRankingChart(month, bestRows, worstRows) {
     const commonOpts = {
-      chart: { type: 'bar', height: 260, toolbar: { show: false } },
+      chart: { type: 'bar', height: 244, toolbar: { show: false } },
       colors: ['#38bdf8'],
-      plotOptions: { bar: { horizontal: true, borderRadius: 8, barHeight: '72%' } },
+      plotOptions: { bar: { horizontal: true, borderRadius: 7, barHeight: '64%' } },
       dataLabels: { enabled: false },
-      grid: { borderColor: '#e5e7eb' }
+      legend: { show: false }
     };
 
     this._renderChart('ranking', '#chartRanking', {
@@ -125,15 +265,14 @@ export class ChartManager {
     const counts = ['A', 'B', 'C', 'D', 'E'].map(g => rows.filter(r => r.grade === g).length);
     
     this._renderChart('gradeDist', '#chartGradeDist', {
-      chart: { type: 'bar', height: 250, toolbar: { show: false } },
+      chart: { type: 'bar', height: 226, toolbar: { show: false } },
       series: [{ name: 'Equipamentos', data: counts }],
       xaxis: { categories: ['A', 'B', 'C', 'D', 'E'] },
       colors: ['#22c55e', '#84cc16', '#eab308', '#f97316', '#ef4444'],
-      plotOptions: { bar: { borderRadius: 10, distributed: true, columnWidth: '52%' } },
-      dataLabels: { enabled: true },
+      plotOptions: { bar: { borderRadius: 8, distributed: true, columnWidth: '48%' } },
+      dataLabels: { enabled: true, offsetY: -4 },
       legend: { show: false },
-      grid: { borderColor: '#e5e7eb' },
-      yaxis: { title: { text: 'Quantidade' } }
+      yaxis: { title: { text: 'Quantidade', style: { fontSize: '11px', fontWeight: 600 } } }
     });
   }
 
@@ -158,13 +297,13 @@ export class ChartManager {
     }
 
     this._renderChart('idleImpact', '#chartIdleImpact', {
-      chart: { type: 'bar', height: 300, toolbar: { show: false } },
+      chart: { type: 'bar', height: 276, toolbar: { show: false } },
       series: [{ name: 'Litros estimados', data: sortedRows.map(r => Number(r.idleImpact.toFixed(1))) }],
-      plotOptions: { bar: { horizontal: true, borderRadius: 8, barHeight: '66%' } },
+      plotOptions: { bar: { horizontal: true, borderRadius: 7, barHeight: '60%' } },
       colors: ['#8b5cf6'],
-      dataLabels: { enabled: true },
-      xaxis: { categories: sortedRows.map(r => r.equipamento), title: { text: 'Litros estimados' } },
-      grid: { borderColor: '#e5e7eb' },
+      dataLabels: { enabled: false },
+      xaxis: { categories: sortedRows.map(r => r.equipamento), title: { text: 'Litros estimados', style: { fontSize: '11px', fontWeight: 600 } } },
+      legend: { show: false },
       tooltip: {
         y: {
           formatter: (_, ctx) => {
@@ -187,7 +326,7 @@ export class ChartManager {
       this.charts[key].destroy();
     }
 
-    this.charts[key] = new ApexCharts(element, options);
+    this.charts[key] = new ApexCharts(element, this._withBaseOptions(options));
     this.charts[key].render();
   }
 }
