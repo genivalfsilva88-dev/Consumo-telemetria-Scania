@@ -160,6 +160,47 @@ export class ChartManager {
   }
 
   /**
+   * Render score gauge (radial)
+   */
+  renderScoreGauge(score, grade) {
+    const value = Math.max(0, Math.min(100, Number(score) || 0));
+    const colorByGrade = { A: '#16a34a', B: '#65a30d', C: '#ca8a04', D: '#ea580c', E: '#dc2626' };
+    const color = colorByGrade[grade] || '#2563eb';
+
+    const options = {
+      chart: { type: 'radialBar', height: 172, sparkline: { enabled: true } },
+      series: [value],
+      colors: [color],
+      plotOptions: {
+        radialBar: {
+          startAngle: -135,
+          endAngle: 135,
+          hollow: { size: '60%' },
+          track: { background: '#e9edf5', strokeWidth: '100%' },
+          dataLabels: {
+            name: { show: true, offsetY: 20, fontSize: '12px', color: '#5b7190', fontWeight: 700 },
+            value: {
+              show: true,
+              offsetY: -8,
+              fontSize: '30px',
+              fontWeight: 800,
+              color: '#0f172a',
+              formatter: () => formatNumber(value, 1)
+            }
+          }
+        }
+      },
+      fill: { type: 'gradient', gradient: { shade: 'light', shadeIntensity: 0.35, gradientToColors: [color], stops: [0, 100] } },
+      labels: [`Nota ${grade || '-'}`],
+      stroke: { lineCap: 'round' },
+      legend: { show: false },
+      tooltip: { enabled: false }
+    };
+
+    this._renderChart('scoreGauge', '#scoreGauge', options);
+  }
+
+  /**
    * Render trend chart
    */
   renderTrendChart(data) {

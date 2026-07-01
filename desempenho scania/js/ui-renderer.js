@@ -455,6 +455,7 @@ export class DashboardUI {
       scoreLetter.textContent = summary.grade;
       scoreLetter.className = `score-letter ${gradeClass(summary.grade)}`;
     }
+    chartManager.renderScoreGauge(summary.scoreMedio, summary.grade);
 
     // Meta progress
     const realValue = document.getElementById('realValue');
@@ -567,7 +568,7 @@ export class DashboardUI {
       const bVal = b != null ? formatNumber(b, digits) : '-';
       return `<div class="compare-stat">
         <div><strong>${label}</strong><div class="subtle">Atual: ${aVal}${unit} • Anterior: ${bVal}${unit}</div></div>
-        <div class="delta ${d.cls}">${d.text}</div>
+        <div class="delta ${d.cls}">${d.text.replace(' vs mês anterior', '')}</div>
       </div>`;
     }).join('');
   }

@@ -75,18 +75,22 @@
     .delta.up.bad, .delta.down.bad { background: rgba(220,38,38,.10); color: var(--danger); }
     .delta.flat { background: rgba(100,116,139,.12); color: var(--muted); }
     .panel-title { margin:0 0 14px; font-size: 16px; font-weight:900; }
-    .grid-analytics { display:grid; grid-template-columns: 1.2fr .9fr; gap:18px; align-items:stretch; }
+    .grid-analytics { display:grid; grid-template-columns: 1.2fr .9fr; gap:18px; align-items:start; }
     .action-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:16px; }
-    .action-card { min-height: 136px; }
+    .action-card { min-height: 112px; }
     .stack-grid { display:grid; grid-template-columns: 1fr; gap:18px; align-items:start; }
     .ranking-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(320px,1fr)); gap:18px; align-items:start; }
     .full-span { grid-column: 1 / -1; }
     .rank-stack { display:grid; gap:18px; }
     .summary-panel { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:14px; }
-    .summary-box { background: linear-gradient(180deg, rgba(248,250,252,.98), rgba(241,245,249,.92)); border:1px solid var(--border); border-radius:18px; padding:14px; min-height: 146px; }
+    .summary-box { background: linear-gradient(180deg, rgba(248,250,252,.98), rgba(241,245,249,.92)); border:1px solid var(--border); border-radius:18px; padding:14px; min-height: 116px; }
     .summary-box.tall { min-height: 320px; }
     .hero-metrics{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center;}
-    .gauge-wrap{display:flex;justify-content:center;align-items:center;min-height:170px;}
+    .gauge-wrap{display:flex;justify-content:center;align-items:center;min-height:130px;flex:1;width:100%;}
+    .score-foot{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;}
+    .metric-box-body{flex:1;display:flex;flex-direction:column;justify-content:space-between;gap:14px;margin-top:10px;}
+    .metric-split{display:flex;justify-content:space-between;gap:12px;}
+    .metric-split strong{font-size:22px;font-weight:900;}
     .score-big { display:flex; align-items:flex-end; gap:16px; margin-top:8px; }
     .score-number { font-size: 34px; font-weight: 900; }
     .score-letter { font-size: 48px; line-height:1; font-weight: 900; }
@@ -130,7 +134,8 @@
     .nowrap { white-space: nowrap; }
     .empty { padding: 30px; color: var(--muted); text-align:center; }
     .footer-note { text-align:center; margin-top: 16px; font-size:12px; color: var(--muted); }
-    .compare-stat { display:flex; justify-content:space-between; gap:10px; padding:10px 0; border-bottom: 1px dashed #e6edf5; }
+    #compareStats { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); column-gap:22px; }
+    .compare-stat { display:flex; justify-content:space-between; align-items:center; gap:10px; padding:10px 0; border-bottom: 1px dashed #e6edf5; }
     .compare-stat:last-child { border-bottom:none; }
     .insight-list { display:grid; gap:10px; margin-top:8px; }
     .insight-item { display:flex; gap:10px; align-items:flex-start; padding:10px 12px; border:1px dashed #d7e2ef; border-radius:14px; background:rgba(248,250,252,.7); }
@@ -307,7 +312,7 @@
     }
     .decision-card {
       position: relative;
-      min-height: 128px;
+      min-height: 108px;
       padding: 16px;
       border-radius: 16px;
       background: linear-gradient(180deg, rgba(255,255,255,.98) 0%, rgba(247,250,255,.94) 100%);
@@ -394,7 +399,7 @@
       background: radial-gradient(circle, rgba(59,196,255,.08) 0%, rgba(59,196,255,0) 72%);
     }
     .layout, .action-grid, .ranking-grid, .compare-grid, .mini-grid, .summary-panel { gap: 14px; }
-    .card { padding:16px 16px 14px; min-height: 126px; }
+    .card { padding:16px 16px 14px; min-height: 112px; }
     .panel { padding:16px; }
     .panel-title {
       font-size: 14px;
@@ -451,12 +456,12 @@
     .alert-item.low .alert-icon { background:#9ca3af; }
     .alert-item.success .alert-icon { background:#16a34a; }
     .alert-sub { font-size:11px; color:var(--muted); margin-top:3px; }
-    .summary-box { border-radius:14px; padding:12px; min-height: 124px; background:linear-gradient(180deg, rgba(251,253,255,.96), rgba(245,249,255,.92)); border-color: rgba(118, 149, 196, .16); }
-    .summary-box.tall { min-height: 272px; }
+    .summary-box { border-radius:14px; padding:12px; background:linear-gradient(180deg, rgba(251,253,255,.96), rgba(245,249,255,.92)); border-color: rgba(118, 149, 196, .16); display:flex; flex-direction:column; }
+    .summary-box.tall { min-height: 196px; }
     .score-big { gap: 12px; margin-top: 6px; }
     .score-number { font-size: 28px; }
-    .score-letter { font-size: 38px; }
-    .mini-card { padding:14px; min-height: 108px; }
+    .score-letter { font-size: 30px; line-height:1; }
+    .mini-card { padding:14px; }
     .mini-label { font-size: 10px; }
     .mini-value { font-size: 18px; margin: 8px 0 5px; }
     .mini-note, .subtle, .metric-sub, .exec-foot, .footer-note { font-size: 11px; line-height: 1.45; }
@@ -495,7 +500,7 @@
       .brand img { width: 104px; }
       .topnav { display:grid; grid-template-columns: 1fr; }
       .toolbar { grid-template-columns: 1fr; }
-      .summary-panel { grid-template-columns: 1fr; }
+      .summary-panel, #compareStats { grid-template-columns: 1fr; }
       .page-head { align-items:flex-start; }
       .statusbar { align-items:flex-start; }
       .month-chip { padding:8px 11px; }
@@ -639,21 +644,23 @@
           <div class="summary-panel">
             <div class="summary-box tall">
               <div class="subtle">Nota média do motorista</div>
-              <div class="score-big">
-                <div class="score-number" id="scoreNumber">-</div>
-                <div class="score-letter" id="scoreLetter">-</div>
-              </div>
-              <div class="delta flat" id="deltaScore">— vs mês anterior</div>
               <div class="gauge-wrap"><div id="scoreGauge"></div></div>
-            </div>
-            <div class="summary-box tall">
-              <div class="subtle">Consumo real x meta</div>
-              <div style="display:flex; justify-content:space-between; gap:12px; margin-top:10px;">
-                <div><div class="subtle">Real</div><strong id="realValue">-</strong></div>
-                <div><div class="subtle">Meta</div><strong id="metaValue">-</strong></div>
+              <div class="score-foot">
+                <span class="delta flat" id="deltaScore">— vs mês anterior</span>
               </div>
-              <div class="meta-progress"><div class="meta-fill" id="metaFill" style="width:0%"></div></div>
-              <div class="subtle" id="metaText">-</div>
+            </div>
+            <div class="summary-box tall metric-box">
+              <div class="subtle">Consumo real x meta</div>
+              <div class="metric-box-body">
+                <div class="metric-split">
+                  <div><div class="subtle">Real</div><strong id="realValue">-</strong></div>
+                  <div style="text-align:right;"><div class="subtle">Meta</div><strong id="metaValue">-</strong></div>
+                </div>
+                <div>
+                  <div class="meta-progress"><div class="meta-fill" id="metaFill" style="width:0%"></div></div>
+                  <div class="subtle" id="metaText">-</div>
+                </div>
+              </div>
             </div>
           </div>
         </section>
