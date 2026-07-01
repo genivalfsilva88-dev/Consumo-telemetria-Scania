@@ -76,10 +76,10 @@
     .delta.flat { background: rgba(100,116,139,.12); color: var(--muted); }
     .panel-title { margin:0 0 14px; font-size: 16px; font-weight:900; }
     .grid-analytics { display:grid; grid-template-columns: 1.2fr .9fr; gap:18px; align-items:stretch; }
-    .action-grid { display:grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap:16px; }
+    .action-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:16px; }
     .action-card { min-height: 136px; }
     .stack-grid { display:grid; grid-template-columns: 1fr; gap:18px; align-items:start; }
-    .ranking-grid { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:18px; align-items:start; }
+    .ranking-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(320px,1fr)); gap:18px; align-items:start; }
     .full-span { grid-column: 1 / -1; }
     .rank-stack { display:grid; gap:18px; }
     .summary-panel { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:14px; }
@@ -91,7 +91,7 @@
     .score-number { font-size: 34px; font-weight: 900; }
     .score-letter { font-size: 48px; line-height:1; font-weight: 900; }
     .grade-a { color:#16a34a; } .grade-b { color:#65a30d; } .grade-c { color:#ca8a04; } .grade-d { color:#ea580c; } .grade-e { color:#dc2626; }
-    .mini-grid { display:grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap:14px; }
+    .mini-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap:14px; }
     .mini-card { padding:16px; min-height: 122px; }
     .mini-top { display:flex; justify-content:space-between; gap:8px; align-items:center; }
     .mini-label { font-size: 12px; text-transform: uppercase; letter-spacing:.5px; color:var(--muted); font-weight:800; }
@@ -101,7 +101,7 @@
     .meta-progress { height: 10px; background:#e9edf5; border-radius:999px; overflow:hidden; margin: 12px 0; }
     .meta-fill { height:100%; background: linear-gradient(90deg, #16a34a, #22c55e); border-radius:999px; }
     .compare-grid { display:grid; grid-template-columns: 1.1fr .9fr; gap:18px; align-items:start; }
-    .executive-strip { display:grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap:14px; }
+    .executive-strip { display:grid; grid-template-columns: repeat(auto-fit, minmax(190px,1fr)); gap:14px; }
     .exec-pill { background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(248,250,252,.96)); border:1px solid var(--border); border-radius:18px; padding:14px 16px; box-shadow: var(--card-shadow); }
     .exec-label { font-size:11px; text-transform:uppercase; letter-spacing:.6px; color:var(--muted); font-weight:800; margin-bottom:6px; }
     .exec-value { font-size:22px; font-weight:900; }
@@ -301,7 +301,7 @@
     }
     .decision-grid {
       display:grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
       gap: 14px;
       margin-bottom: 2px;
     }
@@ -373,7 +373,7 @@
     .fleet-table-panel { min-width: 0; }
     .fleet-table-panel .table-wrap { max-height: 760px; }
     #chartIdleImpact { min-height: 280px; }
-    .cards-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+    .cards-grid { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
     .card, .panel {
       background: linear-gradient(180deg, rgba(255,255,255,.97) 0%, rgba(248,251,255,.93) 100%);
       border-color: var(--border);
@@ -486,10 +486,7 @@
       .topbar-inner { grid-template-columns: 1fr; }
       .toolbar { grid-template-columns: repeat(2, minmax(150px,1fr)); }
       .grid-analytics, .charts-grid, .compare-grid { grid-template-columns: 1fr; }
-      .cards-grid { grid-template-columns: repeat(3, minmax(0,1fr)); }
-      .mini-grid, .action-grid, .decision-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
       .stack-grid, .grid-analytics, .compare-grid, .fleet-top-grid { grid-template-columns: 1fr; }
-      #pageExecutive > section:nth-child(3) > div:nth-child(2) { grid-template-columns: repeat(2, minmax(0,1fr)); }
     }
     @media (max-width: 760px) {
       .container { padding: 14px 12px 28px; }
@@ -498,7 +495,7 @@
       .brand img { width: 104px; }
       .topnav { display:grid; grid-template-columns: 1fr; }
       .toolbar { grid-template-columns: 1fr; }
-      .cards-grid, .mini-grid, .summary-panel, .action-grid, .decision-grid { grid-template-columns: 1fr; }
+      .summary-panel { grid-template-columns: 1fr; }
       .page-head { align-items:flex-start; }
       .statusbar { align-items:flex-start; }
       .month-chip { padding:8px 11px; }
