@@ -11,6 +11,7 @@ import {
   formatInt,
   formatMoney,
   formatCurrencyInput,
+  currentDieselPrice,
   gradeClass,
   pillColor
 } from './calculations.js';
@@ -878,6 +879,8 @@ export class DashboardUI {
       return;
     }
 
+    const diesel = currentDieselPrice();
+
     target.innerHTML = `
       <table role="grid" aria-label="Tabela de desempenho da frota">
         <thead>
@@ -888,6 +891,10 @@ export class DashboardUI {
             <th scope="col">Meta</th>
             <th scope="col">Consumo</th>
             <th scope="col">Δ Consumo</th>
+            <th scope="col">Economia (L)</th>
+            <th scope="col">Economia (R$)</th>
+            <th scope="col">Desperdício (L)</th>
+            <th scope="col">Desperdício (R$)</th>
             <th scope="col">Scania Driver Support (%)</th>
             <th scope="col">Nota</th>
             <th scope="col">Δ Nota</th>
@@ -905,6 +912,27 @@ export class DashboardUI {
             const prev = prevMap.get(r.equipamento + '|' + r.motorista);
             const dCons = deltaInfo(r.consumo, prev?.consumo, true, '', 2);
             const dScore = deltaInfo(r.score, prev?.score, true, '', 1);
+            // Economia (acima da meta) e desperdício (abaixo da meta) em litros e R$
+            let savedLiters = 0;
+            let wasteLiters = 0;
+            if (r.meta > 0 && r.consumo > 0 && r.distancia > 0) {
+              const atual = r.distancia / r.consumo;
+              const alvo = r.distancia / r.meta;
+              if (r.consumo >= r.meta) savedLiters = Math.max(0, alvo - atual);
+              else wasteLiters = Math.max(0, atual - alvo);
+            }
+            const savedCell = savedLiters > 0
+              ? `<span class="delta up good">${formatNumber(savedLiters, 1)}</span>`
+              : '<span class="subtle">-</span>';
+            const savedCostCell = savedLiters > 0
+              ? `<span class="delta up good">R$ ${formatMoney(savedLiters * diesel)}</span>`
+              : '<span class="subtle">-</span>';
+            const wasteCell = wasteLiters > 0
+              ? `<span class="delta down bad">${formatNumber(wasteLiters, 1)}</span>`
+              : '<span class="subtle">-</span>';
+            const wasteCostCell = wasteLiters > 0
+              ? `<span class="delta down bad">R$ ${formatMoney(wasteLiters * diesel)}</span>`
+              : '<span class="subtle">-</span>';
             return `<tr>
               <td><strong>${r.equipamento}</strong></td>
               <td>${r.placa}</td>
@@ -912,6 +940,10 @@ export class DashboardUI {
               <td>${r.meta ? formatNumber(r.meta, 1) : '-'}</td>
               <td><strong>${formatNumber(r.consumo, 2)}</strong></td>
               <td><span class="delta ${dCons.cls}">${dCons.text.replace(' vs mês anterior', '')}</span></td>
+              <td>${savedCell}</td>
+              <td>${savedCostCell}</td>
+              <td>${wasteCell}</td>
+              <td>${wasteCostCell}</td>
               <td>${formatNumber(r.supportUsage, 1)}%</td>
               <td>${formatNumber(r.score, 1)}</td>
               <td><span class="delta ${dScore.cls}">${dScore.text.replace(' vs mês anterior', '')}</span></td>
