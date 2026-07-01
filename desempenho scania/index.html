@@ -51,7 +51,7 @@
     .button.primary { background: linear-gradient(135deg, var(--primary) 0%, #ff4148 100%); border-color: rgba(255,255,255,.1); }
     .button:hover { transform: translateY(-1px); }
     .container { max-width: 1640px; margin: 0 auto; padding: 18px 18px 36px; }
-    .statusbar { display:flex; justify-content:space-between; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom: 18px; }
+    .statusbar { display:flex; justify-content:space-between; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom: 12px; }
     .badge { background: rgba(255,255,255,.92); border: 1px solid var(--border); border-radius: 999px; box-shadow: var(--card-shadow); padding: 9px 14px; display:inline-flex; gap:8px; align-items:center; color: var(--muted); font-size: 12px; font-weight:700; }
     .badge-dot { width: 10px; height: 10px; border-radius:999px; background: var(--success); box-shadow: 0 0 0 4px rgba(22,163,74,.12); }
     .available-months { display:flex; flex-wrap:wrap; gap:8px; }
@@ -77,7 +77,7 @@
     .panel-title { margin:0 0 14px; font-size: 16px; font-weight:900; }
     .grid-analytics { display:grid; grid-template-columns: 1.2fr .9fr; gap:18px; align-items:start; }
     .action-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:16px; }
-    .action-card { min-height: 112px; }
+    .action-card { min-height: 102px; }
     .stack-grid { display:grid; grid-template-columns: 1fr; gap:18px; align-items:start; }
     .ranking-grid { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:18px; align-items:start; }
     .full-span { grid-column: 1 / -1; }
@@ -273,7 +273,7 @@
       border-color: rgba(37, 99, 235, .20);
       color: var(--info);
     }
-    .page-section { display:none; gap:16px; }
+    .page-section { display:none; gap:12px; }
     .page-section.active { display:grid; }
     .page-head {
       display:flex;
@@ -312,8 +312,8 @@
     }
     .decision-card {
       position: relative;
-      min-height: 108px;
-      padding: 16px;
+      min-height: 96px;
+      padding: 14px 15px;
       border-radius: 16px;
       background: linear-gradient(180deg, rgba(255,255,255,.98) 0%, rgba(247,250,255,.94) 100%);
       border: 1px solid var(--border);
@@ -354,7 +354,7 @@
     .decision-value {
       position: relative;
       z-index: 1;
-      margin-top: 12px;
+      margin-top: 8px;
       font-size: clamp(21px, 1.9vw, 29px);
       line-height: 1;
       letter-spacing: -.03em;
@@ -365,7 +365,7 @@
     .decision-foot {
       position: relative;
       z-index: 1;
-      margin-top: 10px;
+      margin-top: 7px;
       color: var(--muted);
       font-size: 12px;
       line-height: 1.45;
@@ -398,12 +398,12 @@
       height: 88px;
       background: radial-gradient(circle, rgba(59,196,255,.08) 0%, rgba(59,196,255,0) 72%);
     }
-    .layout, .action-grid, .ranking-grid, .compare-grid, .mini-grid, .summary-panel { gap: 14px; }
-    .card { padding:16px 16px 14px; min-height: 112px; }
-    .panel { padding:16px; }
+    .layout, .action-grid, .ranking-grid, .compare-grid, .mini-grid, .summary-panel { gap: 12px; }
+    .card { padding:14px 15px 13px; min-height: 102px; }
+    .panel { padding:15px; }
     .panel-title {
       font-size: 14px;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
       line-height: 1.3;
       letter-spacing: -.01em;
       color: #111827;
@@ -457,13 +457,13 @@
     .alert-item.success .alert-icon { background:#16a34a; }
     .alert-sub { font-size:11px; color:var(--muted); margin-top:3px; }
     .summary-box { border-radius:14px; padding:12px; background:linear-gradient(180deg, rgba(251,253,255,.96), rgba(245,249,255,.92)); border-color: rgba(118, 149, 196, .16); display:flex; flex-direction:column; }
-    .summary-box.tall { min-height: 196px; }
+    .summary-box.tall { min-height: 172px; }
     .score-big { gap: 12px; margin-top: 6px; }
     .score-number { font-size: 28px; }
     .score-letter { font-size: 30px; line-height:1; }
     .mini-card { padding:14px; }
     .mini-label { font-size: 10px; }
-    .mini-value { font-size: 18px; margin: 8px 0 5px; }
+    .mini-value { font-size: 18px; margin: 6px 0 4px; }
     .mini-note, .subtle, .metric-sub, .exec-foot, .footer-note { font-size: 11px; line-height: 1.45; }
     .mini-icon { font-size: 18px; }
     .exec-pill { border-radius: 14px; padding: 12px 14px; box-shadow: none; background:linear-gradient(180deg, rgba(251,253,255,.96), rgba(245,249,255,.92)); border-color: rgba(118, 149, 196, .16); }
@@ -476,7 +476,7 @@
     .list-item strong { font-size: 13px; }
     .list-sub { font-size: 11px; line-height: 1.45; }
     .training-level { padding:5px 8px; font-size: 10px; }
-    .panel-head { gap:10px; margin-bottom: 12px; }
+    .panel-head { gap:10px; margin-bottom: 10px; }
     .table-wrap { border-radius: 14px; }
     table { min-width: 1240px; font-size: 12px; }
     th, td { padding: 10px 9px; }
@@ -581,7 +581,7 @@
       </div>
 
       <!-- Alertas Automatizados -->
-      <section class="panel soft-accent full-span" style="margin-bottom:18px;" aria-label="Alertas automatizados">
+      <section class="panel soft-accent full-span" style="margin-bottom:12px;" aria-label="Alertas automatizados">
         <div class="panel-head">
           <h3 class="panel-title" style="margin:0;">Alertas operacionais</h3>
           <span class="subtle">Ações prioritárias automáticas</span>
@@ -723,7 +723,7 @@
         </article>
       </div>
 
-      <section class="panel soft-accent full-span" style="margin-top:18px;" aria-label="Gestão de custos de combustível">
+      <section class="panel soft-accent full-span" style="margin-top:12px;" aria-label="Gestão de custos de combustível">
         <div class="panel-head">
           <h3 class="panel-title" style="margin:0;">Gestão de custos de combustível</h3>
           <span class="subtle" id="costPanelSubtitle">Valores estimados com o diesel médio informado</span>

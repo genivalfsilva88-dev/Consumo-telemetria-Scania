@@ -168,7 +168,7 @@ export class ChartManager {
     const color = colorByGrade[grade] || '#2563eb';
 
     const options = {
-      chart: { type: 'radialBar', height: 172, sparkline: { enabled: true } },
+      chart: { type: 'radialBar', height: 150, sparkline: { enabled: true } },
       series: [value],
       colors: [color],
       plotOptions: {
