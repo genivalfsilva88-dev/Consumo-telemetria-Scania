@@ -191,7 +191,7 @@ export class ChartManager {
         }
       },
       fill: { type: 'gradient', gradient: { shade: 'light', shadeIntensity: 0.35, gradientToColors: [color], stops: [0, 100] } },
-      labels: [`Nota ${grade || '-'}`],
+      labels: ['pontos'],
       stroke: { lineCap: 'round' },
       legend: { show: false },
       tooltip: { enabled: false }

@@ -86,7 +86,9 @@
     .summary-box { background: linear-gradient(180deg, rgba(248,250,252,.98), rgba(241,245,249,.92)); border:1px solid var(--border); border-radius:18px; padding:14px; min-height: 116px; }
     .summary-box.tall { min-height: 320px; }
     .hero-metrics{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center;}
-    .gauge-wrap{display:flex;justify-content:center;align-items:center;min-height:130px;flex:1;width:100%;}
+    .gauge-row{display:flex;align-items:center;justify-content:center;gap:6px;flex:1;width:100%;}
+    .gauge-wrap{display:flex;justify-content:center;align-items:center;min-height:130px;flex:1;}
+    .gauge-row .score-letter{font-size:60px;font-weight:900;line-height:.9;letter-spacing:-.03em;flex:0 0 auto;}
     .score-foot{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;}
     .metric-box-body{flex:1;display:flex;flex-direction:column;justify-content:center;gap:18px;margin-top:10px;}
     .metric-split{display:flex;justify-content:space-between;gap:12px;}
@@ -644,7 +646,10 @@
           <div class="summary-panel">
             <div class="summary-box tall">
               <div class="subtle">Nota média do motorista</div>
-              <div class="gauge-wrap"><div id="scoreGauge"></div></div>
+              <div class="gauge-row">
+                <div class="gauge-wrap"><div id="scoreGauge"></div></div>
+                <div class="score-letter grade-e" id="scoreLetter">-</div>
+              </div>
               <div class="score-foot">
                 <span class="delta flat" id="deltaScore">— vs mês anterior</span>
               </div>
