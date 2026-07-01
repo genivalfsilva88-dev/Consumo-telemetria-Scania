@@ -79,7 +79,7 @@
     .action-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:16px; }
     .action-card { min-height: 112px; }
     .stack-grid { display:grid; grid-template-columns: 1fr; gap:18px; align-items:start; }
-    .ranking-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(320px,1fr)); gap:18px; align-items:start; }
+    .ranking-grid { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:18px; align-items:start; }
     .full-span { grid-column: 1 / -1; }
     .rank-stack { display:grid; gap:18px; }
     .summary-panel { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:14px; }
@@ -88,7 +88,7 @@
     .hero-metrics{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center;}
     .gauge-wrap{display:flex;justify-content:center;align-items:center;min-height:130px;flex:1;width:100%;}
     .score-foot{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;}
-    .metric-box-body{flex:1;display:flex;flex-direction:column;justify-content:space-between;gap:14px;margin-top:10px;}
+    .metric-box-body{flex:1;display:flex;flex-direction:column;justify-content:center;gap:18px;margin-top:10px;}
     .metric-split{display:flex;justify-content:space-between;gap:12px;}
     .metric-split strong{font-size:22px;font-weight:900;}
     .score-big { display:flex; align-items:flex-end; gap:16px; margin-top:8px; }
@@ -420,12 +420,12 @@
     .kpi-foot { font-size: 11px; line-height: 1.45; }
     .iconbox {
       width: 34px;
-      height: 22px;
-      border-radius: 999px;
-      background: linear-gradient(135deg, rgba(37,99,235,.08), rgba(59,196,255,.14), rgba(215,25,32,.07));
+      height: 34px;
+      border-radius: 11px;
+      background: linear-gradient(135deg, rgba(37,99,235,.10), rgba(59,196,255,.16), rgba(215,25,32,.08));
       border: 1px solid rgba(118, 149, 196, .18);
       box-shadow: none;
-      font-size: 9px;
+      font-size: 10px;
       font-weight: 800;
       letter-spacing: .08em;
       color: #4b6385;
@@ -491,7 +491,7 @@
       .topbar-inner { grid-template-columns: 1fr; }
       .toolbar { grid-template-columns: repeat(2, minmax(150px,1fr)); }
       .grid-analytics, .charts-grid, .compare-grid { grid-template-columns: 1fr; }
-      .stack-grid, .grid-analytics, .compare-grid, .fleet-top-grid { grid-template-columns: 1fr; }
+      .stack-grid, .grid-analytics, .compare-grid, .fleet-top-grid, .ranking-grid { grid-template-columns: 1fr; }
     }
     @media (max-width: 760px) {
       .container { padding: 14px 12px 28px; }

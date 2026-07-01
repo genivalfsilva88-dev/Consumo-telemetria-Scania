@@ -300,10 +300,24 @@ export class DashboardUI {
       btn.dataset.navBound = '1';
       btn.addEventListener('click', () => this.setActivePage(btn.dataset.page));
     });
+
+    // Deep-link por hash de URL (#operational, #fleet) para links compartilháveis
+    if (!this._hashNavBound) {
+      this._hashNavBound = true;
+      window.addEventListener('hashchange', () => {
+        const page = location.hash.replace('#', '');
+        if (['executive', 'operational', 'fleet'].includes(page)) this.setActivePage(page);
+      });
+    }
+    const initial = location.hash.replace('#', '');
+    if (['operational', 'fleet'].includes(initial)) this.setActivePage(initial);
   }
 
   setActivePage(page) {
     state.currentPage = page;
+    if (location.hash.replace('#', '') !== page) {
+      history.replaceState(null, '', `#${page}`);
+    }
     const pageMap = {
       executive: 'pageExecutive',
       operational: 'pageOperational',
