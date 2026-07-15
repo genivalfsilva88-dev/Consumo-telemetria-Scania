@@ -557,6 +557,10 @@
           <span class="control-label" id="dieselLabel">Diesel médio (R$/L)</span>
           <input class="control" id="dieselInput" type="text" inputmode="decimal" aria-labelledby="dieselLabel" />
         </div>
+        <div class="control-wrap">
+          <span class="control-label" id="idleTargetLabel">Meta marcha lenta (%)</span>
+          <input class="control" id="idleTargetInput" type="text" inputmode="decimal" aria-labelledby="idleTargetLabel" />
+        </div>
         <button class="button" id="refreshBtn" aria-label="Atualizar dados">Atualizar</button>
         <button class="button" id="csvBtn" aria-label="Exportar para CSV">CSV</button>
         <button class="button" id="reportBtn" aria-label="Exportar relatório">Relatório</button>
@@ -753,6 +757,11 @@
             <div class="exec-label">Economia realizada</div>
             <div class="exec-value" id="costSaved" style="color:var(--success);">-</div>
             <div class="exec-foot" id="costSavedFoot">-</div>
+          </div>
+          <div class="exec-pill">
+            <div class="exec-label">Economia potencial (marcha lenta 15%)</div>
+            <div class="exec-value" id="costIdleSavings15" style="color:var(--success);">-</div>
+            <div class="exec-foot" id="costIdleSavings15Foot">-</div>
           </div>
         </div>
       </section>

@@ -12,6 +12,7 @@ import {
   formatMoney,
   formatCurrencyInput,
   currentDieselPrice,
+  currentIdleSavingsTarget,
   gradeClass,
   pillColor
 } from './calculations.js';
@@ -48,6 +49,7 @@ export class DashboardUI {
       this._populateDriverSelect();
       this._populateFleetSelect();
       this._setupDieselInput();
+      this._setupIdleSavingsTargetInput();
       this._setupExportButtons();
       
       // Render dashboard
@@ -418,6 +420,28 @@ export class DashboardUI {
     };
   }
 
+  _setupIdleSavingsTargetInput() {
+    const input = document.getElementById('idleTargetInput');
+    if (!input) return;
+
+    input.value = formatNumber(state.idleSavingsTargetPercent, 0);
+
+    const applyValue = rawValue => {
+      const normalized = Number.parseFloat(String(rawValue || '').replace(',', '.'));
+      state.idleSavingsTargetPercent = Number.isFinite(normalized) && normalized >= 0 && normalized <= 100
+        ? normalized
+        : CONFIG.goals.idleSavingsTargetPercent;
+      input.value = formatNumber(state.idleSavingsTargetPercent, 0);
+      this.renderDashboard();
+    };
+
+    input.onchange = event => applyValue(event.target.value);
+    input.onblur = event => applyValue(event.target.value);
+    input.onkeydown = event => {
+      if (event.key === 'Enter') applyValue(event.target.value);
+    };
+  }
+
   _setupExportButtons() {
     const csvBtn = document.getElementById('csvBtn');
     const reportBtn = document.getElementById('reportBtn');
@@ -665,6 +689,10 @@ export class DashboardUI {
     // Economia já realizada pelos equipamentos acima da meta
     setEl('costSaved', `R$ ${formatMoney(summary.savedCost)}`);
     setEl('costSavedFoot', `${formatInt(summary.savedLiters)} litros economizados acima da meta`);
+
+    // Economia potencial (cenário hipotético): marcha lenta caindo para a meta configurada
+    setEl('costIdleSavings15', `R$ ${formatMoney(summary.idleSavingsCost15)}`);
+    setEl('costIdleSavings15Foot', `${formatInt(summary.idleSavingsLiters15)} litros se a marcha lenta caísse para ${summary.idleSavingsTargetPercent}%`);
   }
 
   _renderTrendChart() {
@@ -789,7 +817,7 @@ export class DashboardUI {
           <div class="summary-box"><div class="subtle">Equipamentos</div><div class="score-number">${formatInt(rows.length)}</div><div class="subtle">Frotas analisadas no mês</div></div>
           <div class="summary-box"><div class="subtle">Nota média</div><div class="score-number">${formatNumber(s.scoreMedio, 1)}</div><div class="delta ${scoreDelta.cls}">${scoreDelta.text}</div></div>
           <div class="summary-box"><div class="subtle">Consumo</div><div class="score-number">${formatNumber(s.consumoMedio, 2)}</div><div class="subtle">km/l ${s.metaMedia ? `• meta ${formatNumber(s.metaMedia, 2)}` : ''}<br>Scania Driver Support (%): <strong>${formatNumber(s.supportUsageMedio, 1)}%</strong></div></div>
-          <div class="summary-box"><div class="subtle">Pontos de atenção</div><div class="subtle" style="margin-top:10px; line-height:1.7;">Marcha lenta: <strong>${formatNumber(s.marchaLenta, 1)}%</strong><br>Inércia: <strong>${formatNumber(s.inercia, 1)}%</strong><br>Excesso vel.: <strong>${formatNumber(s.excessoVelocidade, 1)}%</strong></div></div>
+          <div class="summary-box"><div class="subtle">Pontos de atenção</div><div class="subtle" style="margin-top:10px; line-height:1.7;">Marcha lenta: <strong>${formatNumber(s.marchaLenta, 1)}%</strong><br>Inércia: <strong>${formatNumber(s.inercia, 1)}%</strong><br>Excesso vel.: <strong>${formatNumber(s.excessoVelocidade, 1)}%</strong><br>Economia potencial (marcha lenta ${s.idleSavingsTargetPercent}%): <strong>R$ ${formatMoney(s.idleSavingsCost15)}</strong></div></div>
         </div>`;
 
       this._setDriverSummary(titleText, html);
@@ -895,6 +923,7 @@ export class DashboardUI {
     }
 
     const diesel = currentDieselPrice();
+    const idleTarget = currentIdleSavingsTarget();
 
     target.innerHTML = `
       <table role="grid" aria-label="Tabela de desempenho da frota">
@@ -916,6 +945,8 @@ export class DashboardUI {
             <th scope="col">Faixa</th>
             <th scope="col">Distância</th>
             <th scope="col">Marcha lenta</th>
+            <th scope="col">Economia ML ${idleTarget}% (L)</th>
+            <th scope="col">Economia ML ${idleTarget}% (R$)</th>
             <th scope="col">Inércia</th>
             <th scope="col">Excesso vel.</th>
             <th scope="col">Freadas</th>
@@ -948,6 +979,16 @@ export class DashboardUI {
             const wasteCostCell = wasteLiters > 0
               ? `<span class="delta down bad">R$ ${formatMoney(wasteLiters * diesel)}</span>`
               : '<span class="subtle">-</span>';
+            // Economia potencial (cenário hipotético) se a marcha lenta caísse para a meta configurada
+            const idleSavings15Liters = (r.consumo > 0 && r.distancia > 0 && r.marchaLenta > idleTarget)
+              ? (r.distancia / r.consumo) * ((r.marchaLenta - idleTarget) / 100)
+              : 0;
+            const idleSavings15Cell = idleSavings15Liters > 0
+              ? `<span class="delta up good">${formatNumber(idleSavings15Liters, 1)}</span>`
+              : '<span class="subtle">-</span>';
+            const idleSavings15CostCell = idleSavings15Liters > 0
+              ? `<span class="delta up good">R$ ${formatMoney(idleSavings15Liters * diesel)}</span>`
+              : '<span class="subtle">-</span>';
             return `<tr>
               <td><strong>${r.equipamento}</strong></td>
               <td>${r.placa}</td>
@@ -965,6 +1006,8 @@ export class DashboardUI {
               <td><span class="pill" style="background:${pillColor(r.grade)}">${r.grade}</span></td>
               <td>${formatInt(r.distancia)}</td>
               <td>${formatNumber(r.marchaLenta, 1)}%</td>
+              <td>${idleSavings15Cell}</td>
+              <td>${idleSavings15CostCell}</td>
               <td>${formatNumber(r.inercia, 1)}%</td>
               <td>${formatNumber(r.excessoVelocidade, 1)}%</td>
               <td>${formatNumber(r.freadasBruscas, 2)}</td>

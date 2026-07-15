@@ -50,6 +50,11 @@ export function currentDieselPrice() {
   return clamp(Number(state.dieselAverage || CONFIG.defaultDieselPrice || 0), 0, 999);
 }
 
+export function currentIdleSavingsTarget() {
+  const value = state.idleSavingsTargetPercent ?? CONFIG.goals.idleSavingsTargetPercent;
+  return clamp(Number(value || 0), 0, 100);
+}
+
 export function gradeClass(letter) {
   return `grade-${String(letter || 'e').toLowerCase()}`;
 }
@@ -69,6 +74,7 @@ export function pillColor(letter) {
  */
 export function computeMonthSummary(rows) {
   const dieselPrice = currentDieselPrice();
+  const idleSavingsTargetPercent = currentIdleSavingsTarget();
 
   if (!rows || rows.length === 0) {
     return {
@@ -100,6 +106,9 @@ export function computeMonthSummary(rows) {
       criticalPct: 0,
       grade: 'E',
       idleLiters: 0,
+      idleSavingsLiters15: 0,
+      idleSavingsCost15: 0,
+      idleSavingsTargetPercent,
       idleAboveTargetCount: 0,
       supportLowCount: 0,
       speedAlertCount: 0,
@@ -128,6 +137,12 @@ export function computeMonthSummary(rows) {
   const idleLiters = rows.reduce((acc, r) => {
     if (!(r.consumo > 0) || !(r.distancia > 0) || !(r.marchaLenta > 0)) return acc;
     return acc + ((r.distancia / r.consumo) * (r.marchaLenta / 100));
+  }, 0);
+
+  // Litros que deixariam de ser queimados em marcha lenta se caísse para a meta hipotética (ajustável pelo usuário, state.idleSavingsTargetPercent)
+  const idleSavingsLiters15 = rows.reduce((acc, r) => {
+    if (!(r.consumo > 0) || !(r.distancia > 0) || !(r.marchaLenta > idleSavingsTargetPercent)) return acc;
+    return acc + ((r.distancia / r.consumo) * ((r.marchaLenta - idleSavingsTargetPercent) / 100));
   }, 0);
 
   // Litros desperdiçados por eficiência abaixo da meta (economia potencial se atingissem a meta)
@@ -174,6 +189,9 @@ export function computeMonthSummary(rows) {
     wasteLiters,
     wasteCost: wasteLiters * dieselPrice,
     idleCost: idleLiters * dieselPrice,
+    idleSavingsLiters15,
+    idleSavingsCost15: idleSavingsLiters15 * dieselPrice,
+    idleSavingsTargetPercent,
     savedLiters,
     savedCost: savedLiters * dieselPrice,
     wastePctOfCost: fuelLiters > 0 ? (wasteLiters / fuelLiters) * 100 : 0,

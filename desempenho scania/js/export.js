@@ -1,5 +1,5 @@
 import { CONFIG, state } from './config.js';
-import { formatNumber, formatInt, formatMoney, formatCurrencyInput, currentDieselPrice, generateAlerts, forecastTrend } from './calculations.js';
+import { formatNumber, formatInt, formatMoney, formatCurrencyInput, currentDieselPrice, currentIdleSavingsTarget, generateAlerts, forecastTrend } from './calculations.js';
 
 /**
  * Export utilities for CSV and PNG
@@ -15,6 +15,7 @@ export class ExportManager {
     }
 
     const diesel = currentDieselPrice();
+    const idleTarget = currentIdleSavingsTarget();
 
     const headers = [
       'Equipamento',
@@ -37,6 +38,8 @@ export class ExportManager {
       'Desperdício (R$)',
       'Litros marcha lenta',
       'Custo marcha lenta (R$)',
+      `Economia ML ${idleTarget}% (litros)`,
+      `Economia ML ${idleTarget}% (R$)`,
       'Mês'
     ];
 
@@ -65,6 +68,8 @@ export class ExportManager {
         formatNumber(c.wasteCost, 2),
         formatNumber(c.idleLiters, 1),
         formatNumber(c.idleCost, 2),
+        formatNumber(c.idleSavings15Liters, 1),
+        formatNumber(c.idleSavings15Cost, 2),
         row.mes || month
       ];
       csvRows.push(values.join(';'));
@@ -88,6 +93,10 @@ export class ExportManager {
   _rowCosts(row, diesel) {
     const fuelLiters = row.consumo > 0 && row.distancia > 0 ? row.distancia / row.consumo : 0;
     const idleLiters = fuelLiters > 0 && row.marchaLenta > 0 ? fuelLiters * (row.marchaLenta / 100) : 0;
+    const idleTarget15 = currentIdleSavingsTarget();
+    const idleSavings15Liters = row.consumo > 0 && row.distancia > 0 && row.marchaLenta > idleTarget15
+      ? (row.distancia / row.consumo) * ((row.marchaLenta - idleTarget15) / 100)
+      : 0;
     let wasteLiters = 0;
     if (row.meta > 0 && row.distancia > 0 && row.consumo > 0 && row.consumo < row.meta) {
       wasteLiters = Math.max(0, (row.distancia / row.consumo) - (row.distancia / row.meta));
@@ -97,6 +106,8 @@ export class ExportManager {
       fuelCost: fuelLiters * diesel,
       idleLiters,
       idleCost: idleLiters * diesel,
+      idleSavings15Liters,
+      idleSavings15Cost: idleSavings15Liters * diesel,
       wasteLiters,
       wasteCost: wasteLiters * diesel
     };
@@ -179,6 +190,7 @@ GESTÃO DE CUSTOS (diesel médio R$ ${formatCurrencyInput(summary.dieselPrice)}/
 • Desperdício abaixo da meta: R$ ${formatMoney(summary.wasteCost)} (${formatInt(summary.wasteLiters)} litros • ${formatNumber(summary.wastePctOfCost, 1)}% do custo)
 • Custo em marcha lenta: R$ ${formatMoney(summary.idleCost)} (${formatInt(summary.idleLiters)} litros)
 • Economia realizada acima da meta: R$ ${formatMoney(summary.savedCost)} (${formatInt(summary.savedLiters)} litros)
+• Economia potencial se marcha lenta caísse para ${summary.idleSavingsTargetPercent}%: R$ ${formatMoney(summary.idleSavingsCost15)} (${formatInt(summary.idleSavingsLiters15)} litros)
 
 INDICADORES DE COMPORTAMENTO
 ----------------------------

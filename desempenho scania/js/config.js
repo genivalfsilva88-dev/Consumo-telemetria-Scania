@@ -39,6 +39,11 @@ export const CONFIG = {
     maxDelayMs: 5000
   },
 
+  // Metas hipoteticas para simulacoes de economia (nao afetam nota/alertas)
+  goals: {
+    idleSavingsTargetPercent: 15
+  },
+
   // Alert thresholds
   alerts: {
     consumptionMetaPercent: 85,
@@ -66,6 +71,7 @@ export const state = {
   selectedDriver: 'TODOS',
   selectedFleet: 'TODOS',
   dieselAverage: CONFIG.defaultDieselPrice,
+  idleSavingsTargetPercent: CONFIG.goals.idleSavingsTargetPercent,
   currentPage: 'executive',
   metaMap: new Map(),
   alerts: [],
