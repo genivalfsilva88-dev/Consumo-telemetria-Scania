@@ -339,6 +339,77 @@ export function forecastTrend(data, monthsAhead = 2) {
 }
 
 /**
+ * Rank all cost/improvement opportunities by financial impact (R$).
+ * Deterministic — no AI involved. Feeds both the "Oportunidades" panel
+ * and the payload sent to the AI narrative/chat endpoints.
+ */
+export function computeOpportunities(summary) {
+  const opportunities = [];
+
+  if (summary.wasteCost > 0) {
+    opportunities.push({
+      categoria: 'consumo',
+      titulo: 'Consumo abaixo da meta',
+      impactoReais: summary.wasteCost,
+      impactoLitros: summary.wasteLiters,
+      afetados: summary.driversBelowMetaCount,
+      acaoRecomendada: 'Revisar treinamento e condução dos motoristas com consumo abaixo da meta cadastrada.',
+      tone: 'danger'
+    });
+  }
+
+  if (summary.idleCost > 0 && summary.idleAboveTargetCount > 0) {
+    opportunities.push({
+      categoria: 'marcha_lenta',
+      titulo: 'Marcha lenta acima do alvo',
+      impactoReais: summary.idleSavingsCost15 > 0 ? summary.idleSavingsCost15 : summary.idleCost,
+      impactoLitros: summary.idleSavingsLiters15 > 0 ? summary.idleSavingsLiters15 : summary.idleLiters,
+      afetados: summary.idleAboveTargetCount,
+      acaoRecomendada: `Reduzir marcha lenta para até ${summary.idleSavingsTargetPercent}% nos equipamentos acima do alvo.`,
+      tone: 'warning'
+    });
+  }
+
+  if (summary.supportLowCount > 0) {
+    opportunities.push({
+      categoria: 'suporte',
+      titulo: 'Baixo uso do Scania Driver Support',
+      impactoReais: 0,
+      impactoLitros: 0,
+      afetados: summary.supportLowCount,
+      acaoRecomendada: 'Incentivar uso do suporte ao motorista — correlacionado com melhor consumo.',
+      tone: 'warning'
+    });
+  }
+
+  if (summary.speedAlertCount > 0) {
+    opportunities.push({
+      categoria: 'velocidade',
+      titulo: 'Excesso de velocidade',
+      impactoReais: 0,
+      impactoLitros: 0,
+      afetados: summary.speedAlertCount,
+      acaoRecomendada: 'Risco operacional e de segurança — priorizar ação mesmo sem custo direto em litros.',
+      tone: 'warning'
+    });
+  }
+
+  if (summary.criticalCount > 0) {
+    opportunities.push({
+      categoria: 'critico',
+      titulo: 'Equipamentos com nota crítica',
+      impactoReais: 0,
+      impactoLitros: 0,
+      afetados: summary.criticalCount,
+      acaoRecomendada: 'Priorizar ação imediata (vistoria, treinamento ou manutenção) nos equipamentos críticos.',
+      tone: 'danger'
+    });
+  }
+
+  return opportunities.sort((a, b) => b.impactoReais - a.impactoReais || b.afetados - a.afetados);
+}
+
+/**
  * Generate alerts based on thresholds
  */
 export function generateAlerts(rows, month) {

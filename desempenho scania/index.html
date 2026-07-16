@@ -489,6 +489,26 @@
     .insight-item { padding:9px 11px; border-radius:12px; background:linear-gradient(180deg, rgba(251,253,255,.96), rgba(245,249,255,.92)); border:1px solid rgba(118, 149, 196, .16); }
     .insight-icon { width:8px; height:8px; font-size:0; background:#9ca3af; margin-top:7px; }
 
+    /* AI insights + chat */
+    .ai-insight-text { font-size: 13px; line-height: 1.7; color: var(--text); white-space: pre-wrap; }
+    .ai-insight-text:empty::before { content: 'Clique em "Gerar análise" para que a IA resuma as oportunidades do período atual.'; color: var(--muted); font-size: 12px; }
+    .ai-chat-messages { display:flex; flex-direction:column; gap:8px; max-height: 340px; overflow-y:auto; padding: 4px 2px 10px; margin-bottom: 10px; }
+    .ai-chat-messages:empty::before { content: 'Pergunte algo sobre os dados do período e filtro atuais.'; color: var(--muted); font-size: 12px; }
+    .ai-chat-bubble { max-width: 82%; padding: 10px 13px; border-radius: 14px; font-size: 13px; line-height: 1.55; white-space: pre-wrap; }
+    .ai-chat-bubble.user { align-self:flex-end; background: rgba(37,99,235,.10); border:1px solid rgba(37,99,235,.16); color: var(--text); }
+    .ai-chat-bubble.assistant { align-self:flex-start; background: rgba(15,23,42,.03); border:1px solid var(--border); color: var(--text); }
+    .ai-chat-bubble.pending { color: var(--muted); font-style: italic; }
+    .ai-chat-bubble.error { background: rgba(254,242,242,.78); border:1px solid rgba(220,38,38,.16); color: var(--danger); }
+    .ai-chat-form { display:flex; gap:8px; }
+    .ai-chat-form .control { flex:1; }
+    .ai-status { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+    .ai-status.error { color: var(--danger); }
+    button[disabled] { opacity:.6; cursor:not-allowed; }
+    /* .button is styled for the dark topbar (white text on translucent white bg) — panels are light, so buttons inside need their own contrast */
+    .panel .button { color: var(--text); background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(241,245,249,.96)); border-color: var(--border); }
+    .panel .button:hover { background: linear-gradient(180deg, #ffffff, #eef2f7); }
+    .panel .button.primary { color: #fff; background: linear-gradient(135deg, var(--primary) 0%, #ff4148 100%); border-color: rgba(255,255,255,.1); }
+
     @media (max-width: 1240px) {
       .topbar-inner { grid-template-columns: 1fr; }
       .toolbar { grid-template-columns: repeat(2, minmax(150px,1fr)); }
@@ -538,6 +558,7 @@
           <button class="nav-pill active" id="navExecutive" data-page="executive">Dashboard executivo</button>
           <button class="nav-pill" id="navOperational" data-page="operational">Análise operacional</button>
           <button class="nav-pill" id="navFleet" data-page="fleet">Detalhamento da frota</button>
+          <button class="nav-pill" id="navInsights" data-page="insights">Oportunidades &amp; IA</button>
         </div>
       </div>
       <div class="toolbar" role="toolbar" aria-label="Controles do dashboard">

@@ -4,6 +4,7 @@ import { DataLoader, normalizeMonthRows } from './data-loader.js';
 import {
   computeMonthSummary,
   computePrimaryPressure,
+  computeOpportunities,
   deltaInfo,
   generateAlerts,
   forecastTrend,
@@ -18,6 +19,7 @@ import {
 } from './calculations.js';
 import { chartManager } from './charts.js';
 import { exportManager } from './export.js';
+import { buildAIContext, generateExecutiveInsight, peekCachedInsight, askAI } from './ai-insights.js';
 
 /**
  * Main UI Renderer and Dashboard Controller
@@ -51,6 +53,7 @@ export class DashboardUI {
       this._setupDieselInput();
       this._setupIdleSavingsTargetInput();
       this._setupExportButtons();
+      this._setupAIPanel();
       
       // Render dashboard
       this.renderDashboard();
@@ -155,7 +158,9 @@ export class DashboardUI {
     this._renderIdleImpactChart(month);
     this._renderTable(month);
     this._renderForecast();
-    
+    this._renderOpportunities(summary);
+    this._renderAIPanel(month, rows, summary);
+
     this.setActivePage(state.currentPage);
     this._updateLastBadge(month);
   }
@@ -294,6 +299,50 @@ export class DashboardUI {
       tablePanel.classList.add('fleet-table-panel');
       fleetGrid.appendChild(tablePanel);
     }
+
+    if (!document.getElementById('pageInsights')) {
+      const pageInsights = document.createElement('section');
+      pageInsights.className = 'page-section';
+      pageInsights.id = 'pageInsights';
+      pageInsights.innerHTML = `
+        <div class="page-head">
+          <div>
+            <span class="page-kicker">Página 4</span>
+            <h2 class="page-title">Oportunidades &amp; IA</h2>
+          </div>
+          <div class="page-note">Oportunidades ranqueadas por impacto financeiro e análise executiva gerada por IA</div>
+        </div>
+
+        <section class="panel soft-accent full-span" aria-label="Oportunidades de redução de custo">
+          <div class="panel-head">
+            <h3 class="panel-title" style="margin:0;">Oportunidades de redução de custo</h3>
+            <span class="subtle">Ranqueadas por impacto em R$ no filtro atual</span>
+          </div>
+          <div id="opportunitiesList" style="display:flex; flex-direction:column; gap:8px;"></div>
+        </section>
+
+        <section class="panel soft-accent full-span" aria-label="Análise executiva por IA">
+          <div class="panel-head">
+            <h3 class="panel-title" style="margin:0;">Análise executiva (IA)</h3>
+            <button class="button" id="aiGenerateBtn" type="button">Gerar análise</button>
+          </div>
+          <div id="aiInsightStatus" class="ai-status"></div>
+          <div id="aiInsightText" class="ai-insight-text"></div>
+        </section>
+
+        <section class="panel soft-accent full-span" aria-label="Chat com IA sobre os dados">
+          <div class="panel-head">
+            <h3 class="panel-title" style="margin:0;">Pergunte à IA sobre os dados</h3>
+            <span class="subtle" id="aiChatContext"></span>
+          </div>
+          <div id="aiChatMessages"></div>
+          <form id="aiChatForm" class="ai-chat-form">
+            <input type="text" id="aiChatInput" class="control" placeholder="Ex.: quais motoristas mais pesam no custo este mês?" autocomplete="off" />
+            <button type="submit" class="button primary" id="aiChatSend">Enviar</button>
+          </form>
+        </section>`;
+      footer.parentNode.insertBefore(pageInsights, footer);
+    }
   }
 
   _setupPageNav() {
@@ -308,11 +357,11 @@ export class DashboardUI {
       this._hashNavBound = true;
       window.addEventListener('hashchange', () => {
         const page = location.hash.replace('#', '');
-        if (['executive', 'operational', 'fleet'].includes(page)) this.setActivePage(page);
+        if (['executive', 'operational', 'fleet', 'insights'].includes(page)) this.setActivePage(page);
       });
     }
     const initial = location.hash.replace('#', '');
-    if (['operational', 'fleet'].includes(initial)) this.setActivePage(initial);
+    if (['operational', 'fleet', 'insights'].includes(initial)) this.setActivePage(initial);
   }
 
   setActivePage(page) {
@@ -323,7 +372,8 @@ export class DashboardUI {
     const pageMap = {
       executive: 'pageExecutive',
       operational: 'pageOperational',
-      fleet: 'pageFleet'
+      fleet: 'pageFleet',
+      insights: 'pageInsights'
     };
     Object.entries(pageMap).forEach(([key, id]) => {
       const section = document.getElementById(id);
@@ -1025,6 +1075,156 @@ export class DashboardUI {
       el.className = `delta ${info.cls}`;
       el.textContent = info.text;
     }
+  }
+
+  _renderOpportunities(summary) {
+    const target = document.getElementById('opportunitiesList');
+    if (!target) return;
+
+    const opportunities = computeOpportunities(summary);
+    if (!opportunities.length) {
+      target.innerHTML = '<div class="empty">Nenhuma oportunidade relevante identificada no filtro atual.</div>';
+      return;
+    }
+
+    target.innerHTML = opportunities.map(o => {
+      const cls = o.tone === 'danger' ? 'lvl-high' : o.tone === 'warning' ? 'lvl-med' : 'lvl-low';
+      const impact = o.impactoReais > 0 ? `R$ ${formatMoney(o.impactoReais)}` : `${formatInt(o.afetados)} equip.`;
+      return `<div class="list-item">
+        <div>
+          <strong>${o.titulo}</strong>
+          <span class="list-sub">${formatInt(o.afetados)} equip. afetado(s) • ${o.acaoRecomendada}</span>
+        </div>
+        <span class="training-level ${cls}">${impact}</span>
+      </div>`;
+    }).join('');
+  }
+
+  _renderAIPanel(month, rows, summary) {
+    if (!document.getElementById('pageInsights')) return;
+
+    const context = buildAIContext(month, rows, summary);
+    this._currentAIContext = context;
+
+    const contextKey = `${month}|${state.selectedDriver}|${state.selectedFleet}`;
+    if (this._aiContextKey !== contextKey) {
+      this._aiContextKey = contextKey;
+      state.aiChatHistory = [];
+      this._renderChatMessages();
+      this._loadCachedInsight(context);
+    }
+
+    const contextLabel = document.getElementById('aiChatContext');
+    if (contextLabel) {
+      const driver = state.selectedDriver === 'TODOS' ? 'Todos os motoristas' : state.selectedDriver;
+      const fleet = state.selectedFleet === 'TODOS' ? 'Todos os equipamentos' : state.selectedFleet;
+      contextLabel.textContent = `${month} • ${driver} • ${fleet}`;
+    }
+  }
+
+  _loadCachedInsight(context) {
+    const status = document.getElementById('aiInsightStatus');
+    const textEl = document.getElementById('aiInsightText');
+    const btn = document.getElementById('aiGenerateBtn');
+    const cached = peekCachedInsight(context);
+
+    if (textEl) textEl.textContent = cached || '';
+    if (status) {
+      status.textContent = cached ? 'Análise em cache para este filtro.' : '';
+      status.className = 'ai-status';
+    }
+    if (btn) btn.textContent = cached ? 'Atualizar análise' : 'Gerar análise';
+  }
+
+  _setupAIPanel() {
+    const btn = document.getElementById('aiGenerateBtn');
+    if (btn && btn.dataset.bound !== '1') {
+      btn.dataset.bound = '1';
+      btn.addEventListener('click', () => this._handleGenerateInsight());
+    }
+
+    const form = document.getElementById('aiChatForm');
+    if (form && form.dataset.bound !== '1') {
+      form.dataset.bound = '1';
+      form.addEventListener('submit', event => {
+        event.preventDefault();
+        this._handleChatSubmit();
+      });
+    }
+  }
+
+  async _handleGenerateInsight() {
+    const btn = document.getElementById('aiGenerateBtn');
+    const status = document.getElementById('aiInsightStatus');
+    const textEl = document.getElementById('aiInsightText');
+    if (!btn || !this._currentAIContext) return;
+
+    btn.disabled = true;
+    btn.textContent = 'Gerando...';
+    if (status) { status.textContent = 'Consultando IA...'; status.className = 'ai-status'; }
+
+    try {
+      const { text } = await generateExecutiveInsight(this._currentAIContext, { force: true });
+      if (textEl) textEl.textContent = text;
+      if (status) { status.textContent = 'Análise gerada agora.'; status.className = 'ai-status'; }
+      btn.textContent = 'Atualizar análise';
+    } catch (error) {
+      if (status) { status.textContent = error.message; status.className = 'ai-status error'; }
+      btn.textContent = 'Gerar análise';
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  async _handleChatSubmit() {
+    const input = document.getElementById('aiChatInput');
+    const sendBtn = document.getElementById('aiChatSend');
+    if (!input || !this._currentAIContext) return;
+
+    const question = input.value.trim();
+    if (!question) return;
+
+    this._appendChatBubble('user', question);
+    input.value = '';
+    input.disabled = true;
+    if (sendBtn) sendBtn.disabled = true;
+
+    const pendingEl = this._appendChatBubble('assistant', 'Pensando...', 'pending');
+
+    try {
+      const answer = await askAI(question, this._currentAIContext);
+      if (pendingEl) {
+        pendingEl.textContent = answer;
+        pendingEl.classList.remove('pending');
+      }
+    } catch (error) {
+      if (pendingEl) {
+        pendingEl.textContent = error.message;
+        pendingEl.classList.remove('pending');
+        pendingEl.classList.add('error');
+      }
+    } finally {
+      input.disabled = false;
+      if (sendBtn) sendBtn.disabled = false;
+      input.focus();
+    }
+  }
+
+  _renderChatMessages() {
+    const container = document.getElementById('aiChatMessages');
+    if (container) container.innerHTML = '';
+  }
+
+  _appendChatBubble(role, text, extraClass = '') {
+    const container = document.getElementById('aiChatMessages');
+    if (!container) return null;
+
+    const bubble = document.createElement('div');
+    bubble.className = `ai-chat-bubble ${role} ${extraClass}`.trim();
+    bubble.textContent = text;
+    container.appendChild(bubble);
+    container.scrollTop = container.scrollHeight;
+    return bubble;
   }
 
   _updateLastBadge(month) {

@@ -59,6 +59,13 @@ export const CONFIG = {
     currencyBRL: true,
     decimalSeparator: ',',
     thousandSeparator: '.'
+  },
+
+  // AI insights (Cloudflare Pages Functions + Workers AI)
+  ai: {
+    insightsEndpoint: '/api/insights',
+    chatEndpoint: '/api/chat',
+    maxHistory: 6
   }
 };
 
@@ -78,5 +85,7 @@ export const state = {
   cache: {
     data: null,
     timestamp: null
-  }
+  },
+  aiChatHistory: [],
+  aiInsightCache: null
 };
