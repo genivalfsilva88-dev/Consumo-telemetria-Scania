@@ -30,7 +30,7 @@ export async function onRequestPost(context) {
     return jsonError('JSON inválido.', 400);
   }
 
-  const { month, filters, summary, opportunities, alerts } = payload || {};
+  const { month, filters, summary, opportunities, alerts, topDrivers, topEquipment } = payload || {};
   if (!summary || typeof summary !== 'object') {
     return jsonError('Campo "summary" é obrigatório.', 400);
   }
@@ -40,20 +40,24 @@ export async function onRequestPost(context) {
     filtros: filters || {},
     resumo: summary,
     oportunidades: Array.isArray(opportunities) ? opportunities.slice(0, 10) : [],
-    alertas: Array.isArray(alerts) ? alerts.slice(0, 10) : []
+    alertas: Array.isArray(alerts) ? alerts.slice(0, 10) : [],
+    motoristas_que_mais_precisam_de_atencao: Array.isArray(topDrivers) ? topDrivers.slice(0, 10) : [],
+    equipamentos_que_mais_precisam_de_atencao: Array.isArray(topEquipment) ? topEquipment.slice(0, 10) : []
   };
 
   const messages = [
     {
       role: 'system',
       content: [
-        'Você é um analista de frota escrevendo para a diretoria de uma transportadora (Ziran Logística e Transporte).',
-        'Use APENAS os números fornecidos no JSON abaixo. Nunca invente valores, litros, percentuais ou nomes que não estejam no contexto.',
+        'Você é um analista de frota sênior escrevendo para a diretoria de uma transportadora (Ziran Logística e Transporte). Seu trabalho é transformar os números do JSON em um plano de ação real, não um resumo genérico.',
+        'Use APENAS os números, nomes de motoristas e de equipamentos fornecidos no JSON abaixo. Nunca invente valores, litros, percentuais ou nomes que não estejam no contexto.',
+        'Sempre que possível, cite nomes específicos de "motoristas_que_mais_precisam_de_atencao" e "equipamentos_que_mais_precisam_de_atencao" nas recomendações, em vez de falar em termos genéricos como "os motoristas com baixo desempenho".',
+        'Cada recomendação deve ser uma ação concreta e executável esta semana (quem/o quê fazer), não um lembrete abstrato como "revisar treinamento" sem dizer com quem.',
         'Escreva em português do Brasil, direto ao ponto, tom executivo (sem jargão técnico desnecessário).',
         'Formato da resposta:',
-        '1) Um parágrafo curto (3-4 frases) resumindo a situação do período.',
-        '2) Uma lista de recomendações (bullets "- "), ordenadas pela oportunidade de maior impacto em R$ para a menor, cada uma com a ação prática recomendada.',
-        'Se não houver oportunidades relevantes no contexto, diga isso claramente e elogie o resultado.'
+        '1) Um parágrafo curto (3-4 frases) resumindo a situação do período com os números principais.',
+        '2) Uma lista de 3 a 5 ações concretas (bullets "- "), ordenadas da maior para a menor oportunidade em R$, cada uma citando nomes/equipamentos do contexto quando existirem e o resultado esperado.',
+        'Se não houver oportunidades relevantes no contexto, diga isso claramente e elogie o resultado — não invente problemas.'
       ].join('\n')
     },
     {
@@ -65,7 +69,7 @@ export async function onRequestPost(context) {
   try {
     const result = await env.AI.run(MODEL, {
       messages,
-      max_tokens: 700,
+      max_tokens: 900,
       temperature: 0.3
     });
 

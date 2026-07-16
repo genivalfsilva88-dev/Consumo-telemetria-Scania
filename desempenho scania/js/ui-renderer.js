@@ -333,7 +333,10 @@ export class DashboardUI {
         <section class="panel soft-accent full-span" aria-label="Chat com IA sobre os dados">
           <div class="panel-head">
             <h3 class="panel-title" style="margin:0;">Pergunte à IA sobre os dados</h3>
-            <span class="subtle" id="aiChatContext"></span>
+            <div style="display:flex; align-items:center; gap:10px;">
+              <span class="subtle" id="aiChatContext"></span>
+              <button class="button ghost" id="aiChatClearBtn" type="button" title="Apagar a conversa e começar outra pergunta">Limpar conversa</button>
+            </div>
           </div>
           <div id="aiChatMessages"></div>
           <form id="aiChatForm" class="ai-chat-form">
@@ -1151,6 +1154,27 @@ export class DashboardUI {
         this._handleChatSubmit();
       });
     }
+
+    const clearBtn = document.getElementById('aiChatClearBtn');
+    if (clearBtn && clearBtn.dataset.bound !== '1') {
+      clearBtn.dataset.bound = '1';
+      clearBtn.addEventListener('click', () => this._handleClearChat());
+    }
+
+    const input = document.getElementById('aiChatInput');
+    if (input && input.dataset.bound !== '1') {
+      input.dataset.bound = '1';
+      input.addEventListener('keydown', event => {
+        if (event.key === 'Escape') input.value = '';
+      });
+    }
+  }
+
+  _handleClearChat() {
+    state.aiChatHistory = [];
+    this._renderChatMessages();
+    const input = document.getElementById('aiChatInput');
+    if (input) { input.value = ''; input.focus(); }
   }
 
   async _handleGenerateInsight() {

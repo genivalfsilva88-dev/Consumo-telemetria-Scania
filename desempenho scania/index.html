@@ -504,10 +504,14 @@
     .ai-status { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
     .ai-status.error { color: var(--danger); }
     button[disabled] { opacity:.6; cursor:not-allowed; }
-    /* .button is styled for the dark topbar (white text on translucent white bg) — panels are light, so buttons inside need their own contrast */
+    /* .button/.control are styled for the dark topbar (white text/bg) — panels are light, so controls inside need their own contrast */
     .panel .button { color: var(--text); background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(241,245,249,.96)); border-color: var(--border); }
     .panel .button:hover { background: linear-gradient(180deg, #ffffff, #eef2f7); }
     .panel .button.primary { color: #fff; background: linear-gradient(135deg, var(--primary) 0%, #ff4148 100%); border-color: rgba(255,255,255,.1); }
+    .panel .button.ghost { color: var(--muted); background: transparent; border-color: var(--border); font-weight:700; }
+    .panel .button.ghost:hover { color: var(--text); background: rgba(15,23,42,.04); }
+    .panel .control { color: var(--text); background: rgba(15,23,42,.03); backdrop-filter: none; }
+    .panel .control::placeholder { color: var(--muted); opacity:1; }
 
     @media (max-width: 1240px) {
       .topbar-inner { grid-template-columns: 1fr; }

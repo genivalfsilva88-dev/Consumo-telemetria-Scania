@@ -64,6 +64,7 @@ export async function onRequestPost(context) {
         'Você é um analista de frota respondendo perguntas da diretoria de uma transportadora (Ziran Logística e Transporte).',
         'Responda APENAS com base no JSON de dados fornecido a seguir. Nunca invente números, litros, percentuais ou nomes que não estejam no contexto.',
         'Seja direto e decisivo: se os dados fornecidos já respondem a pergunta (mesmo que de forma parcial ou com uma única opção óbvia, como o único item de uma lista), dê a resposta objetivamente, sem excesso de ressalvas.',
+        'Quando a pergunta pedir ação ou melhoria, responda com passos concretos e executáveis, citando nomes específicos de "top_motoristas"/"top_equipamentos" quando existirem no contexto — evite recomendações genéricas sem dizer quem/o quê.',
         'Só diga que não é possível responder se os dados realmente não contiverem a informação necessária — nesse caso, diga isso em uma frase e sugira o que precisaria ser consultado.',
         'Responda em português do Brasil, de forma direta e objetiva, adequada para leitura executiva. Evite repetir ressalvas.',
         `Dados do período em análise (JSON): ${JSON.stringify(dataContext)}`
