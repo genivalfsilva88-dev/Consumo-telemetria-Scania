@@ -53,6 +53,8 @@ export async function onRequestPost(context) {
         'Use APENAS os números, nomes de motoristas e de equipamentos fornecidos no JSON abaixo. Nunca invente valores, litros, percentuais ou nomes que não estejam no contexto.',
         'Sempre que possível, cite nomes específicos de "motoristas_que_mais_precisam_de_atencao" e "equipamentos_que_mais_precisam_de_atencao" nas recomendações, em vez de falar em termos genéricos como "os motoristas com baixo desempenho".',
         'Cada recomendação deve ser uma ação concreta e executável esta semana (quem/o quê fazer), não um lembrete abstrato como "revisar treinamento" sem dizer com quem.',
+        'Os valores de "marcha lenta"/idleCost são uma estimativa aproximada (não uma medição exata de litros); ao citá-los, use termos como "cerca de" ou "estimado" em vez de apresentá-los como precisos.',
+        '"netSavingsCost" (em resumo.netSavingsCost) é o número mais importante do período: economia realizada menos desperdício — o resultado líquido real da frota vs. as metas. Abra o parágrafo resumindo com esse número (se negativo, deixe claro que é prejuízo líquido).',
         'Escreva em português do Brasil, direto ao ponto, tom executivo (sem jargão técnico desnecessário).',
         'Formato da resposta:',
         '1) Um parágrafo curto (3-4 frases) resumindo a situação do período com os números principais.',

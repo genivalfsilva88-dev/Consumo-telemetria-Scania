@@ -1,5 +1,5 @@
 import { CONFIG, state } from './config.js';
-import { formatNumber, formatInt, formatMoney, formatCurrencyInput, currentDieselPrice, currentIdleSavingsTarget, generateAlerts, forecastTrend } from './calculations.js';
+import { formatNumber, formatInt, formatMoney, formatCurrencyInput, currentDieselPrice, currentIdleSavingsTarget, generateAlerts, forecastTrend, idleFuelRateFactor } from './calculations.js';
 
 /**
  * Export utilities for CSV and PNG
@@ -36,10 +36,11 @@ export class ExportManager {
       'Custo combustível (R$)',
       'Litros desperdiçados',
       'Desperdício (R$)',
-      'Litros marcha lenta',
-      'Custo marcha lenta (R$)',
-      `Economia ML ${idleTarget}% (litros)`,
-      `Economia ML ${idleTarget}% (R$)`,
+      'Economia líquida (R$)',
+      'Litros marcha lenta (real, estimado)',
+      'Custo marcha lenta (real, R$, estimado)',
+      `Economia ML ${idleTarget}% (litros, estimado)`,
+      `Economia ML ${idleTarget}% (R$, estimado)`,
       'Mês'
     ];
 
@@ -66,6 +67,7 @@ export class ExportManager {
         formatNumber(c.fuelCost, 2),
         formatNumber(c.wasteLiters, 1),
         formatNumber(c.wasteCost, 2),
+        formatNumber(c.savedCost - c.wasteCost, 2),
         formatNumber(c.idleLiters, 1),
         formatNumber(c.idleCost, 2),
         formatNumber(c.idleSavings15Liters, 1),
@@ -91,15 +93,23 @@ export class ExportManager {
    * Custos estimados de um equipamento (litros e R$)
    */
   _rowCosts(row, diesel) {
+    const idleFactor = idleFuelRateFactor();
     const fuelLiters = row.consumo > 0 && row.distancia > 0 ? row.distancia / row.consumo : 0;
-    const idleLiters = fuelLiters > 0 && row.marchaLenta > 0 ? fuelLiters * (row.marchaLenta / 100) : 0;
+    // Litros realmente queimados em marcha lenta no período (estimativa aproximada — ver idleFuelRateFactor)
+    const idleLiters = fuelLiters > 0 && row.marchaLenta > 0 ? fuelLiters * (row.marchaLenta / 100) * idleFactor : 0;
     const idleTarget15 = currentIdleSavingsTarget();
+    // Economia adicional (hipotética) se a marcha lenta caísse até a meta configurada
     const idleSavings15Liters = row.consumo > 0 && row.distancia > 0 && row.marchaLenta > idleTarget15
-      ? (row.distancia / row.consumo) * ((row.marchaLenta - idleTarget15) / 100)
+      ? (row.distancia / row.consumo) * ((row.marchaLenta - idleTarget15) / 100) * idleFactor
       : 0;
     let wasteLiters = 0;
-    if (row.meta > 0 && row.distancia > 0 && row.consumo > 0 && row.consumo < row.meta) {
-      wasteLiters = Math.max(0, (row.distancia / row.consumo) - (row.distancia / row.meta));
+    let savedLiters = 0;
+    if (row.meta > 0 && row.distancia > 0 && row.consumo > 0) {
+      if (row.consumo < row.meta) {
+        wasteLiters = Math.max(0, (row.distancia / row.consumo) - (row.distancia / row.meta));
+      } else {
+        savedLiters = Math.max(0, (row.distancia / row.meta) - (row.distancia / row.consumo));
+      }
     }
     return {
       fuelLiters,
@@ -109,7 +119,9 @@ export class ExportManager {
       idleSavings15Liters,
       idleSavings15Cost: idleSavings15Liters * diesel,
       wasteLiters,
-      wasteCost: wasteLiters * diesel
+      wasteCost: wasteLiters * diesel,
+      savedLiters,
+      savedCost: savedLiters * diesel
     };
   }
 
@@ -186,6 +198,7 @@ META DE CONSUMO
 
 GESTÃO DE CUSTOS (diesel médio R$ ${formatCurrencyInput(summary.dieselPrice)}/l)
 ---------------
+• Economia líquida do período (economia − desperdício): ${summary.netSavingsCost >= 0 ? '' : '-'}R$ ${formatMoney(Math.abs(summary.netSavingsCost))}
 • Custo total de combustível: R$ ${formatMoney(summary.fuelCost)} (${formatInt(summary.fuelLiters)} litros)
 • Desperdício abaixo da meta: R$ ${formatMoney(summary.wasteCost)} (${formatInt(summary.wasteLiters)} litros • ${formatNumber(summary.wastePctOfCost, 1)}% do custo)
 • Custo em marcha lenta: R$ ${formatMoney(summary.idleCost)} (${formatInt(summary.idleLiters)} litros)

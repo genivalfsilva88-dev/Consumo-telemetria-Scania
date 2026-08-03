@@ -63,6 +63,15 @@ A nota composta e uma media ponderada (pesos em `config.js > scoring.weights`):
 
 Quando algum componente nao se aplica (ex.: equipamento sem meta), os pesos sao renormalizados entre os componentes disponiveis. Excesso de velocidade nao entra na nota, mas continua no painel como indicador de risco operacional e seguranca.
 
+Equipamento sem meta cadastrada tem sua nota calculada só com suporte/marcha lenta/inércia — o painel marca isso com `†` na tabela e no ranking, pois essa nota não reflete consumo real.
+
+## Qualidade de dado e metodologia (leia antes de decidir)
+
+- **Atividade mínima**: equipamento com menos de `CONFIG.alerts.minActivityKm` (30 km) rodados no mês fica de fora de médias, rankings, alertas críticos e oportunidades — evita que um caminhão parado (sensor com falha, fora de operação) apareça como "pior desempenho". Fica marcado com `⚠` na tabela e contado no rodapé do card "Frota analisada".
+- **Ranking por % da meta, não por km/l bruto**: como cada equipamento tem sua própria meta (rota/carga variam), o ranking de melhores/piores compara `consumo ÷ meta`, não o valor absoluto — assim um equipamento de rota difícil não aparece como "pior" só por ter meta mais dura.
+- **Custo de marcha lenta é uma estimativa aproximada**: a planilha só informa marcha lenta como % do *tempo* de motor ligado, não litros por hora parado. O painel assume que a taxa de queima parado é `CONFIG.alerts.idleFuelRateFactor` (35%) da taxa média de consumo rodando — ajuste esse fator se houver dado real de consumo/hora parado do fabricante. Os valores de marcha lenta em R$/litros no painel e na IA são sempre rotulados como estimativa.
+- **Economia líquida do período** (`summary.netSavingsCost` = economia realizada − desperdício) é o número de fechamento: quanto a operação ganhou ou perdeu, em R$, comparado ao cenário em que toda a frota rodasse exatamente na meta. Ele **não soma o custo de marcha lenta** — o consumo (km/l) reportado já embute o efeito da marcha lenta (mais tempo parado ⇒ pior km/l ⇒ mais desperdício), então somar os dois de novo duplicaria a perda. O custo de marcha lenta no painel é só um diagnóstico de *por que* a frota está desperdiçando, não uma perda adicional.
+
 ## Gestao de custos
 
 O painel estima valores em R$ a partir do diesel medio informado na barra de controles (`Diesel medio (R$/L)`):

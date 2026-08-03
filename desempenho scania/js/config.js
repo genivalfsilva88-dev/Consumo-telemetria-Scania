@@ -51,7 +51,20 @@ export const CONFIG = {
     criticalScoreThreshold: 60,
     criticalConsumoRatio: 0.9,   // crítico se consumo < 90% da meta (margem para evitar excesso de "críticos")
     supportUsageLowThreshold: 60,
-    speedAlertThreshold: 3
+    speedAlertThreshold: 3,
+
+    // Distância mínima (km) no período para um equipamento entrar nas médias, rankings,
+    // alertas críticos e oportunidades. Evita que um caminhão parado (0 km, sensor com
+    // falha) apareça como "pior desempenho" só porque consumo/distância ficaram zerados.
+    minActivityKm: 30,
+
+    // Fator de correção do consumo em marcha lenta: marcha lenta é medida em % do TEMPO
+    // de motor ligado, mas a taxa de queima parado (L/h) é bem menor que a taxa média de
+    // operação (L/h rodando). Aplicar o % de tempo direto sobre o total de litros do
+    // período superestima o litro gasto em marcha lenta. Este fator (0-1) aproxima a
+    // relação entre a taxa de consumo parado e a taxa média — ajuste se houver dado
+    // real de consumo/hora parado do fabricante.
+    idleFuelRateFactor: 0.35
   },
 
   // Export settings

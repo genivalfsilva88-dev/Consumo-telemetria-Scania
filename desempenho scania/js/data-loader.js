@@ -329,6 +329,7 @@ export function normalizeMonthRows(rows) {
       motorista: metaInfo.motorista || 'Sem cadastro',
       placa: metaInfo.placa || '-',
       meta: metaInfo.meta || 0,
+      temMeta: (metaInfo.meta || 0) > 0,
       grade: gradeFromScore(score)
     };
   }).filter(Boolean);

@@ -15,7 +15,9 @@ import {
   currentDieselPrice,
   currentIdleSavingsTarget,
   gradeClass,
-  pillColor
+  pillColor,
+  hasMinActivity,
+  idleFuelRateFactor
 } from './calculations.js';
 import { chartManager } from './charts.js';
 import { exportManager } from './export.js';
@@ -537,6 +539,12 @@ export class DashboardUI {
     const scoreLetter = document.getElementById('scoreLetter');
 
     if (kpiFrota) kpiFrota.textContent = formatInt(summary.frota);
+    const kpiFrotaFoot = document.getElementById('kpiFrotaFoot');
+    if (kpiFrotaFoot) {
+      kpiFrotaFoot.textContent = summary.inactiveCount > 0
+        ? `Quantidade de equipamentos no período filtrado • ${formatInt(summary.inactiveCount)} sem atividade mínima (fora das médias)`
+        : 'Quantidade de equipamentos no período filtrado';
+    }
     if (kpiConsumo) kpiConsumo.textContent = formatNumber(summary.consumoMedio, 2);
     if (kpiDistancia) kpiDistancia.textContent = formatInt(summary.distanciaMedia);
     if (kpiKmTotal) kpiKmTotal.textContent = formatInt(summary.totalKm);
@@ -695,8 +703,12 @@ export class DashboardUI {
     setEl('savingsValueFoot', `Cálculo com diesel médio de R$ ${formatCurrencyInput(summary.dieselPrice)}/l`);
     setEl('criticalCount', formatInt(summary.criticalCount));
     setEl('criticalPct', `${formatNumber(summary.criticalPct, 1)}% da frota`);
+    setEl('criticalCountFoot', summary.inactiveCount > 0
+      ? `Nota baixa ou desempenho abaixo da meta • base de ${formatInt(summary.frota - summary.inactiveCount)} equip. com atividade mínima`
+      : 'Nota baixa ou desempenho abaixo da meta no periodo filtrado');
     setEl('supportExecutive', `${formatNumber(summary.supportUsageMedio, 1)}%`);
     setEl('idleLiters', formatInt(summary.idleLiters));
+    setEl('idleLitersFoot', `Estimativa aproximada (taxa de queima parado ≈${formatNumber(CONFIG.alerts.idleFuelRateFactor * 100, 0)}% da taxa média rodando)`);
     setEl('driversBelowMeta', formatInt(summary.driversBelowMetaCount));
     setEl('speedExecutive', `${formatNumber(summary.excessoVelocidade, 1)}%`);
     setEl('idleAboveTarget', formatInt(summary.idleAboveTargetCount));
@@ -727,6 +739,15 @@ export class DashboardUI {
 
     setEl('costPanelSubtitle', `Valores estimados com diesel médio de R$ ${diesel}/l`);
 
+    // Bottom line: economia realizada menos desperdício (não soma marcha lenta — ver nota no rodapé)
+    const netEl = document.getElementById('costNet');
+    if (netEl) {
+      const isGain = summary.netSavingsCost >= 0;
+      netEl.style.color = isGain ? 'var(--success)' : 'var(--danger)';
+      netEl.textContent = `${isGain ? '' : '-'}R$ ${formatMoney(Math.abs(summary.netSavingsCost))}`;
+    }
+    setEl('costNetFoot', `Economia realizada (R$ ${formatMoney(summary.savedCost)}) − desperdício (R$ ${formatMoney(summary.wasteCost)}). Não inclui marcha lenta, que já está embutida no consumo.`);
+
     // Custo total de combustível do período
     setEl('costFuel', `R$ ${formatMoney(summary.fuelCost)}`);
     setEl('costFuelFoot', `${formatInt(summary.fuelLiters)} litros consumidos no período`);
@@ -737,7 +758,7 @@ export class DashboardUI {
 
     // Custo do combustível queimado em marcha lenta
     setEl('costIdle', `R$ ${formatMoney(summary.idleCost)}`);
-    setEl('costIdleFoot', `${formatInt(summary.idleLiters)} litros estimados parados em marcha lenta`);
+    setEl('costIdleFoot', `${formatInt(summary.idleLiters)} litros estimados (aprox., taxa de queima parado ≈${formatNumber(CONFIG.alerts.idleFuelRateFactor * 100, 0)}% da taxa média)`);
 
     // Economia já realizada pelos equipamentos acima da meta
     setEl('costSaved', `R$ ${formatMoney(summary.savedCost)}`);
@@ -765,15 +786,29 @@ export class DashboardUI {
 
   _renderRankingChart(month) {
     const fleetRows = [...(state.monthData[month] || [])];
-    const bestRows = fleetRows.slice().sort((a, b) => b.consumo - a.consumo).slice(0, 10).reverse();
-    const worstRows = fleetRows.slice().sort((a, b) => a.consumo - b.consumo).slice(0, 10).reverse();
-    
+    const activeRows = fleetRows.filter(hasMinActivity);
+    const eligible = activeRows.filter(r => r.meta > 0).map(r => ({ ...r, ratio: r.consumo / r.meta }));
+    const inactiveCount = fleetRows.length - activeRows.length;
+    const noMetaCount = activeRows.length - eligible.length;
+
+    // Ranking por consumo relativo à meta de cada equipamento (%), não por km/l bruto —
+    // equipamentos têm metas diferentes por perfil de rota/carga, então comparar consumo
+    // absoluto entre eles favorece injustamente quem tem rota mais fácil.
+    const bestRows = eligible.slice().sort((a, b) => b.ratio - a.ratio).slice(0, 10).reverse();
+    const worstRows = eligible.slice().sort((a, b) => a.ratio - b.ratio).slice(0, 10).reverse();
+
     chartManager.renderRankingChart(month, bestRows, worstRows);
-    
+
+    const exclusionNote = [
+      inactiveCount > 0 ? `${inactiveCount} sem atividade mínima` : null,
+      noMetaCount > 0 ? `${noMetaCount} sem meta cadastrada` : null
+    ].filter(Boolean).join(' e ');
+    const suffix = exclusionNote ? ` • ${exclusionNote} não entram no ranking` : '';
+
     const rankingSubtitle = document.getElementById('rankingSubtitle');
     const worstRankingSubtitle = document.getElementById('worstRankingSubtitle');
-    if (rankingSubtitle) rankingSubtitle.textContent = `Frota completa de ${month} • filtro por motorista não aplicado`;
-    if (worstRankingSubtitle) worstRankingSubtitle.textContent = `Frota completa de ${month} • foco para ação imediata`;
+    if (rankingSubtitle) rankingSubtitle.textContent = `Frota completa de ${month} • filtro por motorista não aplicado${suffix}`;
+    if (worstRankingSubtitle) worstRankingSubtitle.textContent = `Frota completa de ${month} • foco para ação imediata${suffix}`;
   }
 
   _renderGradeDistribution(month) {
@@ -977,6 +1012,7 @@ export class DashboardUI {
 
     const diesel = currentDieselPrice();
     const idleTarget = currentIdleSavingsTarget();
+    const idleFactor = idleFuelRateFactor();
 
     target.innerHTML = `
       <table role="grid" aria-label="Tabela de desempenho da frota">
@@ -992,12 +1028,15 @@ export class DashboardUI {
             <th scope="col">Economia (R$)</th>
             <th scope="col">Desperdício (L)</th>
             <th scope="col">Desperdício (R$)</th>
+            <th scope="col">Economia líquida (R$)</th>
             <th scope="col">Scania Driver Support (%)</th>
             <th scope="col">Nota</th>
             <th scope="col">Δ Nota</th>
             <th scope="col">Faixa</th>
             <th scope="col">Distância</th>
             <th scope="col">Marcha lenta</th>
+            <th scope="col">Marcha lenta real (L)</th>
+            <th scope="col">Marcha lenta real (R$)</th>
             <th scope="col">Economia ML ${idleTarget}% (L)</th>
             <th scope="col">Economia ML ${idleTarget}% (R$)</th>
             <th scope="col">Inércia</th>
@@ -1032,9 +1071,28 @@ export class DashboardUI {
             const wasteCostCell = wasteLiters > 0
               ? `<span class="delta down bad">R$ ${formatMoney(wasteLiters * diesel)}</span>`
               : '<span class="subtle">-</span>';
-            // Economia potencial (cenário hipotético) se a marcha lenta caísse para a meta configurada
+            // Economia líquida do equipamento: só um dos dois (economia OU desperdício) é
+            // diferente de zero por linha, então isso é só o mesmo valor com o sinal certo
+            const netCostRow = (savedLiters - wasteLiters) * diesel;
+            const netCostCell = netCostRow === 0
+              ? '<span class="subtle">-</span>'
+              : `<span class="delta ${netCostRow > 0 ? 'up good' : 'down bad'}">${netCostRow > 0 ? '' : '-'}R$ ${formatMoney(Math.abs(netCostRow))}</span>`;
+            // Marcha lenta real: quanto o equipamento efetivamente queimou parado no período,
+            // não importa se está acima ou abaixo da meta (estimativa — ver idleFuelRateFactor)
+            const idleRealLiters = (r.consumo > 0 && r.distancia > 0 && r.marchaLenta > 0)
+              ? (r.distancia / r.consumo) * (r.marchaLenta / 100) * idleFactor
+              : 0;
+            const idleRealCell = idleRealLiters > 0
+              ? formatNumber(idleRealLiters, 1)
+              : '<span class="subtle">-</span>';
+            const idleRealCostCell = idleRealLiters > 0
+              ? `R$ ${formatMoney(idleRealLiters * diesel)}`
+              : '<span class="subtle">-</span>';
+            // Economia potencial (cenário hipotético): quanto a MAIS ele economizaria se reduzisse
+            // a marcha lenta até a meta configurada. Fica "-" quando já está na meta ou abaixo dela
+            // (não há economia adicional a capturar, ele já está entre os melhores nesse indicador).
             const idleSavings15Liters = (r.consumo > 0 && r.distancia > 0 && r.marchaLenta > idleTarget)
-              ? (r.distancia / r.consumo) * ((r.marchaLenta - idleTarget) / 100)
+              ? (r.distancia / r.consumo) * ((r.marchaLenta - idleTarget) / 100) * idleFactor
               : 0;
             const idleSavings15Cell = idleSavings15Liters > 0
               ? `<span class="delta up good">${formatNumber(idleSavings15Liters, 1)}</span>`
@@ -1042,8 +1100,11 @@ export class DashboardUI {
             const idleSavings15CostCell = idleSavings15Liters > 0
               ? `<span class="delta up good">R$ ${formatMoney(idleSavings15Liters * diesel)}</span>`
               : '<span class="subtle">-</span>';
-            return `<tr>
-              <td><strong>${r.equipamento}</strong></td>
+            const isActive = hasMinActivity(r);
+            const inactiveMark = isActive ? '' : ' <span class="subtle" title="Distância abaixo do mínimo de atividade — fora das médias, rankings e alertas críticos">⚠</span>';
+            const noMetaMark = r.temMeta ? '' : ' <span class="subtle" title="Sem meta cadastrada — nota não considera o componente de consumo">†</span>';
+            return `<tr${isActive ? '' : ' class="row-inactive"'}>
+              <td><strong>${r.equipamento}</strong>${inactiveMark}</td>
               <td>${r.placa}</td>
               <td>${r.motorista}</td>
               <td>${r.meta ? formatNumber(r.meta, 1) : '-'}</td>
@@ -1053,12 +1114,15 @@ export class DashboardUI {
               <td>${savedCostCell}</td>
               <td>${wasteCell}</td>
               <td>${wasteCostCell}</td>
+              <td>${netCostCell}</td>
               <td>${formatNumber(r.supportUsage, 1)}%</td>
               <td>${formatNumber(r.score, 1)}</td>
               <td><span class="delta ${dScore.cls}">${dScore.text.replace(' vs mês anterior', '')}</span></td>
-              <td><span class="pill" style="background:${pillColor(r.grade)}">${r.grade}</span></td>
+              <td><span class="pill" style="background:${pillColor(r.grade)}">${r.grade}</span>${noMetaMark}</td>
               <td>${formatInt(r.distancia)}</td>
               <td>${formatNumber(r.marchaLenta, 1)}%</td>
+              <td>${idleRealCell}</td>
+              <td>${idleRealCostCell}</td>
               <td>${idleSavings15Cell}</td>
               <td>${idleSavings15CostCell}</td>
               <td>${formatNumber(r.inercia, 1)}%</td>
@@ -1068,7 +1132,8 @@ export class DashboardUI {
             </tr>`;
           }).join('')}
         </tbody>
-      </table>`;
+      </table>
+      <div class="table-footnote">⚠ abaixo do mínimo de ${CONFIG.alerts.minActivityKm} km de atividade no período — fora das médias, rankings e alertas críticos. † sem meta cadastrada — nota não considera consumo. "Economia ML" é estimativa aproximada (assume taxa de queima parado ≈${formatNumber(idleFactor * 100, 0)}% da taxa média rodando).</div>`;
   }
 
   _setDelta(elId, current, previous, betterWhenHigher = true, unit = '', digits = 1) {

@@ -1,5 +1,5 @@
 import { CONFIG, state } from './config.js';
-import { formatNumber, formatInt, formatMoney, pillColor, gradeClass } from './calculations.js';
+import { formatNumber, formatInt, formatMoney, pillColor, gradeClass, idleFuelRateFactor } from './calculations.js';
 
 /**
  * Chart manager for ApexCharts
@@ -269,33 +269,34 @@ export class ChartManager {
       legend: { show: false }
     };
 
+    const tooltipFor = rowsRef => ({
+      y: { formatter: v => `${formatNumber(v, 1)}% da meta` },
+      custom: ({ dataPointIndex }) => {
+        const row = rowsRef[dataPointIndex];
+        if (!row) return '';
+        return `<div style="padding:10px 12px;min-width:220px"><strong>Equip. #${row.equipamento}</strong><br><span style="color:#475569">${row.motorista || '-'} - ${row.placa || '-'}</span><br><span style="color:#0f172a">${formatNumber(row.consumo, 2)} km/l vs meta ${formatNumber(row.meta, 2)} km/l — <strong>${formatNumber(row.ratio * 100, 1)}%</strong></span></div>`;
+      }
+    });
+
     this._renderChart('ranking', '#chartRanking', {
       ...commonOpts,
-      series: [{ name: 'Consumo', data: bestRows.map(r => Number(r.consumo.toFixed(2))) }],
-      xaxis: { categories: bestRows.map(r => `#${r.equipamento}`) },
-      tooltip: {
-        y: { formatter: v => `${formatNumber(v, 2)} km/l` },
-        custom: ({ dataPointIndex }) => {
-          const row = bestRows[dataPointIndex];
-          if (!row) return '';
-          return `<div style="padding:10px 12px;min-width:210px"><strong>Equip. #${row.equipamento}</strong><br><span style="color:#475569">${row.motorista || '-'} - ${row.placa || '-'}</span><br><span style="color:#0f172a">Consumo: <strong>${formatNumber(row.consumo, 2)} km/l</strong></span></div>`;
-        }
-      }
+      series: [{ name: '% da meta', data: bestRows.map(r => Number((r.ratio * 100).toFixed(1))) }],
+      xaxis: {
+        categories: bestRows.map(r => `#${r.equipamento}`),
+        title: { text: '% da meta de consumo', style: { fontSize: '11px', fontWeight: 600 } }
+      },
+      tooltip: tooltipFor(bestRows)
     });
 
     this._renderChart('worstRanking', '#chartWorstRanking', {
       ...commonOpts,
       colors: ['#fb7185'],
-      series: [{ name: 'Consumo', data: worstRows.map(r => Number(r.consumo.toFixed(2))) }],
-      xaxis: { categories: worstRows.map(r => `#${r.equipamento}`) },
-      tooltip: {
-        y: { formatter: v => `${formatNumber(v, 2)} km/l` },
-        custom: ({ dataPointIndex }) => {
-          const row = worstRows[dataPointIndex];
-          if (!row) return '';
-          return `<div style="padding:10px 12px;min-width:210px"><strong>Equip. #${row.equipamento}</strong><br><span style="color:#475569">${row.motorista || '-'} - ${row.placa || '-'}</span><br><span style="color:#0f172a">Consumo: <strong>${formatNumber(row.consumo, 2)} km/l</strong></span></div>`;
-        }
-      }
+      series: [{ name: '% da meta', data: worstRows.map(r => Number((r.ratio * 100).toFixed(1))) }],
+      xaxis: {
+        categories: worstRows.map(r => `#${r.equipamento}`),
+        title: { text: '% da meta de consumo', style: { fontSize: '11px', fontWeight: 600 } }
+      },
+      tooltip: tooltipFor(worstRows)
     });
   }
 
@@ -321,10 +322,11 @@ export class ChartManager {
    * Render idle impact chart
    */
   renderIdleImpactChart(rows) {
+    const factor = idleFuelRateFactor();
     const sortedRows = rows
       .map(r => ({
         ...r,
-        idleImpact: r.consumo > 0 && r.distancia > 0 ? (r.distancia / r.consumo) * (r.marchaLenta / 100) : 0
+        idleImpact: r.consumo > 0 && r.distancia > 0 ? (r.distancia / r.consumo) * (r.marchaLenta / 100) * factor : 0
       }))
       .filter(r => r.idleImpact > 0)
       .sort((a, b) => b.idleImpact - a.idleImpact)

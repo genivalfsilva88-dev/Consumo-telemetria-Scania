@@ -545,6 +545,176 @@
       .container { max-width: none; padding:0; }
       .panel, .card { box-shadow:none; break-inside: avoid; }
     }
+    /* ===== Premium visual layer ===== */
+    :root {
+      --accent: #38bdf8;
+      --glow-primary: rgba(215, 25, 32, .28);
+      --glow-accent: rgba(56, 189, 248, .30);
+      --radius-lg: 26px;
+      --ease: cubic-bezier(.22, 1, .36, 1);
+    }
+
+    ::selection { background: rgba(215,25,32,.18); color: var(--text); }
+
+    ::-webkit-scrollbar { width: 11px; height: 11px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #b9c8de, #9fb2cf); border-radius: 999px; border: 3px solid transparent; background-clip: padding-box; }
+    ::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, #9fb2cf, #86a0c4); background-clip: padding-box; }
+
+    button:focus-visible, .control:focus-visible, input:focus-visible, .nav-pill:focus-visible, .month-chip:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(56,189,248,.45), 0 0 0 1px rgba(255,255,255,.4);
+    }
+
+    html, body {
+      background:
+        radial-gradient(1200px 560px at 10% -12%, rgba(56,189,248,.16), transparent 58%),
+        radial-gradient(980px 520px at 104% -6%, rgba(215,25,32,.13), transparent 55%),
+        radial-gradient(1100px 720px at 50% 130%, rgba(37,99,235,.10), transparent 60%),
+        linear-gradient(180deg, #f8fbff 0%, var(--bg) 42%, #e7eefb 100%);
+      background-attachment: fixed;
+    }
+
+    .topbar {
+      overflow: hidden;
+      background:
+        radial-gradient(760px 340px at 100% -20%, rgba(56,189,248,.22), transparent 55%),
+        radial-gradient(520px 300px at -6% 120%, rgba(215,25,32,.20), transparent 55%),
+        linear-gradient(160deg, #061733 0%, #0d2a5c 58%, #123a76 100%);
+      border-bottom: 1px solid rgba(255,255,255,.10);
+      box-shadow: 0 18px 44px rgba(6,15,35,.32), inset 0 -1px 0 rgba(255,255,255,.05);
+    }
+
+    .brand img { box-shadow: 0 14px 30px rgba(0,0,0,.24), 0 0 0 1px rgba(255,255,255,.06); transition: transform .3s var(--ease); }
+    .brand img:hover { transform: translateY(-2px) scale(1.02); }
+
+    .brand h1 {
+      background: linear-gradient(120deg, #ffffff 0%, #d8e8ff 55%, #9fc6ff 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .brand p { color: rgba(210, 226, 255, .78); }
+
+    .nav-pill { transition: transform .22s var(--ease), background .22s var(--ease), box-shadow .22s var(--ease); }
+    .nav-pill:hover { background: rgba(255,255,255,.14); transform: translateY(-1px); }
+    .nav-pill.active {
+      background: linear-gradient(135deg, #ffffff, #eaf3ff);
+      box-shadow: 0 10px 22px rgba(0,0,0,.22), 0 0 0 1px rgba(255,255,255,.5) inset;
+    }
+
+    .control, .button { transition: transform .2s var(--ease), box-shadow .2s var(--ease), background .2s var(--ease), border-color .2s var(--ease); }
+    .control:hover { background: rgba(255,255,255,.14); }
+    .button:hover { transform: translateY(-2px); box-shadow: 0 10px 22px rgba(0,0,0,.20); }
+    .button.primary {
+      background: linear-gradient(135deg, var(--primary) 0%, #ff525a 60%, #ff8a8f 120%);
+      box-shadow: 0 10px 26px var(--glow-primary);
+    }
+    .button.primary:hover { box-shadow: 0 14px 32px var(--glow-primary); }
+
+    .month-chip { transition: transform .18s var(--ease), box-shadow .18s var(--ease), border-color .18s var(--ease); }
+    .month-chip:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 10px 20px rgba(8,21,45,.10); }
+    .month-chip.active { box-shadow: 0 8px 18px rgba(37,99,235,.16), 0 0 0 1px rgba(37,99,235,.12) inset; }
+
+    .card, .panel {
+      transition: transform .28s var(--ease), box-shadow .28s var(--ease), border-color .28s var(--ease);
+      border-radius: var(--radius-lg);
+    }
+    .card:hover, .panel:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 26px 54px rgba(8,21,45,.14), 0 0 0 1px rgba(118,149,196,.14) inset;
+    }
+    .card::after { background: radial-gradient(circle, var(--glow-accent) 0%, rgba(56,189,248,0) 72%); }
+
+    .decision-card { border-radius: 22px; transition: transform .26s var(--ease), box-shadow .26s var(--ease); }
+    .decision-card:hover { transform: translateY(-3px); box-shadow: 0 22px 46px rgba(8,21,45,.14); }
+    .decision-card.success { box-shadow: 0 16px 36px rgba(22,163,74,.14); }
+    .decision-card.warning { box-shadow: 0 16px 36px rgba(217,119,6,.14); }
+    .decision-card.danger { box-shadow: 0 16px 36px rgba(220,38,38,.14); }
+    .decision-value { background: linear-gradient(120deg, var(--text), #1f2f4d); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+    .iconbox {
+      background: linear-gradient(135deg, rgba(37,99,235,.14), rgba(56,196,255,.20), rgba(215,25,32,.10));
+      box-shadow: 0 1px 0 rgba(255,255,255,.5) inset, 0 6px 14px rgba(8,21,45,.06);
+    }
+
+    .kpi-value { letter-spacing: -.045em; }
+    .gauge-wrap { position: relative; }
+    .gauge-wrap::before {
+      content: '';
+      position: absolute;
+      inset: 8px;
+      border-radius: 999px;
+      background: radial-gradient(circle, rgba(56,189,248,.14), transparent 70%);
+      filter: blur(6px);
+      z-index: 0;
+    }
+    .gauge-wrap > div { position: relative; z-index: 1; }
+
+    .pill { box-shadow: 0 4px 10px rgba(8,21,45,.14); }
+    .training-level, .badge, .exec-pill, .list-item, .alert-item, .month-chip { transition: box-shadow .2s var(--ease), transform .2s var(--ease); }
+
+    .exec-pill.highlight {
+      background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(240,247,255,.96));
+      border: 1px solid rgba(37,99,235,.22);
+      box-shadow: 0 12px 26px rgba(37,99,235,.10);
+    }
+    .exec-pill.highlight .exec-label { color: #1d4ed8; }
+    .exec-pill.highlight .exec-value { font-size: 26px; }
+
+    .ai-chat-bubble.user { box-shadow: 0 4px 12px rgba(37,99,235,.10); }
+    .ai-chat-bubble.assistant { box-shadow: 0 4px 12px rgba(8,21,45,.05); }
+
+    /* Linhas fora do mínimo de atividade / footnote de metodologia da tabela */
+    .row-inactive { opacity: .55; }
+    .table-footnote {
+      position: sticky;
+      left: 0;
+      padding: 10px 12px;
+      font-size: 11px;
+      color: var(--muted);
+      background: #f8fafc;
+      border-top: 1px solid #edf2f7;
+    }
+
+    .page-title {
+      background: linear-gradient(120deg, var(--text) 0%, #223c68 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(12px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      @keyframes sheen {
+        0% { background-position: -120% 0; }
+        100% { background-position: 220% 0; }
+      }
+      .card, .panel, .decision-card, .exec-pill, .mini-card {
+        animation: fadeInUp .55s var(--ease) both;
+      }
+      .cards-grid > *:nth-child(1), .decision-grid > *:nth-child(1), .action-grid > *:nth-child(1) { animation-delay: .02s; }
+      .cards-grid > *:nth-child(2), .decision-grid > *:nth-child(2), .action-grid > *:nth-child(2) { animation-delay: .06s; }
+      .cards-grid > *:nth-child(3), .decision-grid > *:nth-child(3), .action-grid > *:nth-child(3) { animation-delay: .10s; }
+      .cards-grid > *:nth-child(4), .action-grid > *:nth-child(4) { animation-delay: .14s; }
+      .cards-grid > *:nth-child(5) { animation-delay: .18s; }
+      .topbar::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(100deg, transparent 20%, rgba(255,255,255,.07) 38%, transparent 55%);
+        background-size: 200% 100%;
+        animation: sheen 10s ease-in-out infinite;
+        pointer-events: none;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .card:hover, .panel:hover, .decision-card:hover { transform: none; }
+    }
   </style>
 </head>
 <body>
@@ -645,7 +815,7 @@
         <article class="card">
           <div class="kpi-top"><div class="kpi-meta"><div class="kpi-label">Frota analisada</div><div class="kpi-value" id="kpiFrota">-</div></div><div class="iconbox">FR</div></div>
           <div class="delta flat" id="deltaFrota">— vs mês anterior</div>
-          <div class="kpi-foot">Quantidade de equipamentos no período filtrado</div>
+          <div class="kpi-foot" id="kpiFrotaFoot">Quantidade de equipamentos no período filtrado</div>
         </article>
         <article class="card">
           <div class="kpi-top"><div class="kpi-meta"><div class="kpi-label">Consumo médio</div><div class="kpi-value" id="kpiConsumo">-</div></div><div class="iconbox">CM</div></div>
@@ -725,7 +895,7 @@
         <article class="card action-card">
           <div class="kpi-top"><div class="kpi-meta"><div class="kpi-label">Equipamentos críticos</div><div class="metric-line"><div class="metric-big" id="criticalCount">-</div><div class="metric-sub" id="criticalPct">-</div></div></div><div class="iconbox">EQ</div></div>
           <div class="delta flat" id="deltaCritical">- vs mes anterior</div>
-          <div class="kpi-foot">Nota baixa ou desempenho abaixo da meta no periodo filtrado</div>
+          <div class="kpi-foot" id="criticalCountFoot">Nota baixa ou desempenho abaixo da meta no periodo filtrado</div>
         </article>
         <article class="card action-card">
           <div class="kpi-top"><div class="kpi-meta"><div class="kpi-label">Scania Driver Support (%)</div><div class="metric-line"><div class="metric-big" id="supportExecutive">-</div><div class="metric-sub">média</div></div></div><div class="iconbox">SD</div></div>
@@ -738,7 +908,7 @@
         <article class="card action-card">
           <div class="kpi-top"><div class="kpi-meta"><div class="kpi-label">Consumo em marcha lenta</div><div class="metric-line"><div class="metric-big" id="idleLiters">-</div><div class="metric-sub">litros</div></div></div><div class="iconbox">ML</div></div>
           <div class="delta flat" id="deltaIdleLiters">- vs mes anterior</div>
-          <div class="kpi-foot">Estimativa operacional baseada no percentual medio de marcha lenta</div>
+          <div class="kpi-foot" id="idleLitersFoot">Estimativa operacional baseada no percentual medio de marcha lenta</div>
         </article>
         <article class="card action-card">
           <div class="kpi-top"><div class="kpi-meta"><div class="kpi-label">Marcha lenta acima de 20%</div><div class="metric-line"><div class="metric-big" id="idleAboveTarget">-</div><div class="metric-sub">equip.</div></div></div><div class="iconbox">AM</div></div>
@@ -763,6 +933,11 @@
           <span class="subtle" id="costPanelSubtitle">Valores estimados com o diesel médio informado</span>
         </div>
         <div class="executive-strip">
+          <div class="exec-pill highlight">
+            <div class="exec-label">Economia líquida do período</div>
+            <div class="exec-value" id="costNet">-</div>
+            <div class="exec-foot" id="costNetFoot">-</div>
+          </div>
           <div class="exec-pill">
             <div class="exec-label">Custo de combustível</div>
             <div class="exec-value" id="costFuel">-</div>
@@ -843,14 +1018,14 @@
       <div class="ranking-grid">
         <section class="panel soft-accent">
           <div class="panel-head">
-            <h3 class="panel-title" style="margin:0;">Top 10 equipamentos por consumo</h3>
+            <h3 class="panel-title" style="margin:0;">Top 10 equipamentos vs meta (%)</h3>
             <span class="subtle" id="rankingSubtitle">Ranking da frota completa</span>
           </div>
           <div id="chartRanking"></div>
         </section>
         <section class="panel soft-accent">
           <div class="panel-head">
-            <h3 class="panel-title" style="margin:0;">10 equipamentos com menor consumo</h3>
+            <h3 class="panel-title" style="margin:0;">10 equipamentos mais abaixo da meta (%)</h3>
             <span class="subtle" id="worstRankingSubtitle">Foco para ação imediata</span>
           </div>
           <div id="chartWorstRanking"></div>

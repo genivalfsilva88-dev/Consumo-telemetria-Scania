@@ -55,6 +55,20 @@ export function currentIdleSavingsTarget() {
   return clamp(Number(value || 0), 0, 100);
 }
 
+/**
+ * Um equipamento só entra em médias, rankings, alertas críticos e oportunidades
+ * se rodou uma distância mínima no período — evita que um veículo parado (0 km,
+ * falha de telemetria) seja lido como "pior desempenho".
+ */
+export function hasMinActivity(row) {
+  return Number(row?.distancia || 0) >= (CONFIG.alerts.minActivityKm || 0);
+}
+
+export function idleFuelRateFactor() {
+  const value = CONFIG.alerts.idleFuelRateFactor;
+  return clamp(Number.isFinite(value) ? value : 1, 0, 1);
+}
+
 export function gradeClass(letter) {
   return `grade-${String(letter || 'e').toLowerCase()}`;
 }
@@ -101,6 +115,8 @@ export function computeMonthSummary(rows) {
       idleCost: 0,
       savedLiters: 0,
       savedCost: 0,
+      netSavingsLiters: 0,
+      netSavingsCost: 0,
       wastePctOfCost: 0,
       criticalCount: 0,
       criticalPct: 0,
@@ -116,33 +132,44 @@ export function computeMonthSummary(rows) {
       marchaLenta: 0,
       inercia: 0,
       excessoVelocidade: 0,
-      freadasBruscas: 0
+      freadasBruscas: 0,
+      inactiveCount: 0,
+      noMetaCount: 0
     };
   }
 
-  const validMetaRows = rows.filter(r => r.meta > 0);
+  // Só equipamentos com atividade mínima no período entram em médias, rankings,
+  // alertas críticos e oportunidades (ver hasMinActivity). O total de frota
+  // continua contando todo mundo, para não esconder equipamento sem dado.
+  const judgedRows = rows.filter(hasMinActivity);
+  const inactiveCount = rows.length - judgedRows.length;
+  const idleFactor = idleFuelRateFactor();
+
+  const validMetaRows = judgedRows.filter(r => r.meta > 0);
   const metaHitRows = validMetaRows.filter(r => r.consumo >= r.meta);
   const belowMetaRows = validMetaRows.filter(r => r.consumo < r.meta);
-  const idleAboveTargetRows = rows.filter(r => r.marchaLenta > 20);
-  const supportLowRows = rows.filter(r => r.supportUsage < 60);
-  const speedAlertRows = rows.filter(r => r.excessoVelocidade > 3);
+  const idleAboveTargetRows = judgedRows.filter(r => r.marchaLenta > 20);
+  const supportLowRows = judgedRows.filter(r => r.supportUsage < 60);
+  const speedAlertRows = judgedRows.filter(r => r.excessoVelocidade > 3);
 
   // Litros totais consumidos no período (distância / eficiência)
-  const fuelLiters = rows.reduce((acc, r) => {
+  const fuelLiters = judgedRows.reduce((acc, r) => {
     if (!(r.consumo > 0) || !(r.distancia > 0)) return acc;
     return acc + (r.distancia / r.consumo);
   }, 0);
 
-  // Litros queimados em marcha lenta (estimativa proporcional ao % de marcha lenta)
-  const idleLiters = rows.reduce((acc, r) => {
+  // Litros queimados em marcha lenta (estimativa: % do tempo parado aplicado sobre o
+  // total de litros do período, corrigido pelo idleFuelRateFactor porque a taxa de
+  // queima parado é bem menor que a taxa média rodando — ver CONFIG.alerts.idleFuelRateFactor)
+  const idleLiters = judgedRows.reduce((acc, r) => {
     if (!(r.consumo > 0) || !(r.distancia > 0) || !(r.marchaLenta > 0)) return acc;
-    return acc + ((r.distancia / r.consumo) * (r.marchaLenta / 100));
+    return acc + ((r.distancia / r.consumo) * (r.marchaLenta / 100) * idleFactor);
   }, 0);
 
   // Litros que deixariam de ser queimados em marcha lenta se caísse para a meta hipotética (ajustável pelo usuário, state.idleSavingsTargetPercent)
-  const idleSavingsLiters15 = rows.reduce((acc, r) => {
+  const idleSavingsLiters15 = judgedRows.reduce((acc, r) => {
     if (!(r.consumo > 0) || !(r.distancia > 0) || !(r.marchaLenta > idleSavingsTargetPercent)) return acc;
-    return acc + ((r.distancia / r.consumo) * ((r.marchaLenta - idleSavingsTargetPercent) / 100));
+    return acc + ((r.distancia / r.consumo) * ((r.marchaLenta - idleSavingsTargetPercent) / 100) * idleFactor);
   }, 0);
 
   // Litros desperdiçados por eficiência abaixo da meta (economia potencial se atingissem a meta)
@@ -161,20 +188,20 @@ export function computeMonthSummary(rows) {
     return acc + Math.max(0, alvo - atual);
   }, 0);
 
-  const criticalRows = rows.filter(r =>
+  const criticalRows = judgedRows.filter(r =>
     r.score < CONFIG.alerts.criticalScoreThreshold ||
     (r.meta > 0 && r.consumo < r.meta * CONFIG.alerts.criticalConsumoRatio)
   );
 
   return {
     frota: rows.length,
-    consumoMedio: avg(rows, 'consumo'),
+    consumoMedio: avg(judgedRows, 'consumo'),
     consumoMedioMeta: avg(validMetaRows, 'consumo'),
-    distanciaMedia: avg(rows, 'distancia'),
+    distanciaMedia: avg(judgedRows, 'distancia'),
     totalKm: sum(rows, 'distancia'),
     co2Total: sum(rows, 'co2'),
-    scoreMedio: avg(rows, 'score'),
-    supportUsageMedio: avg(rows, 'supportUsage'),
+    scoreMedio: avg(judgedRows, 'score'),
+    supportUsageMedio: avg(judgedRows, 'supportUsage'),
     metaMedia: avg(validMetaRows, 'meta'),
     metaHitPct: validMetaRows.length ? (metaHitRows.length / validMetaRows.length) * 100 : 0,
     metaHitCount: metaHitRows.length,
@@ -194,19 +221,26 @@ export function computeMonthSummary(rows) {
     idleSavingsTargetPercent,
     savedLiters,
     savedCost: savedLiters * dieselPrice,
+    // Bottom line real do período: economia realizada (quem bateu a meta) menos desperdício
+    // (quem ficou abaixo). Não soma idleCost separado — o consumo (km/l) já embute o efeito
+    // da marcha lenta, então waste/saved já refletem isso; somar idleCost de novo duplicaria.
+    netSavingsLiters: savedLiters - wasteLiters,
+    netSavingsCost: (savedLiters - wasteLiters) * dieselPrice,
     wastePctOfCost: fuelLiters > 0 ? (wasteLiters / fuelLiters) * 100 : 0,
     criticalCount: criticalRows.length,
-    criticalPct: rows.length ? (criticalRows.length / rows.length) * 100 : 0,
-    grade: gradeFromScore(avg(rows, 'score')),
+    criticalPct: judgedRows.length ? (criticalRows.length / judgedRows.length) * 100 : 0,
+    grade: gradeFromScore(avg(judgedRows, 'score')),
     idleLiters,
     idleAboveTargetCount: idleAboveTargetRows.length,
     supportLowCount: supportLowRows.length,
     speedAlertCount: speedAlertRows.length,
     driversBelowMetaCount: uniqueCount(belowMetaRows, 'motorista'),
-    marchaLenta: avg(rows, 'marchaLenta'),
-    inercia: avg(rows, 'inercia'),
-    excessoVelocidade: avg(rows, 'excessoVelocidade'),
-    freadasBruscas: avg(rows, 'freadasBruscas')
+    marchaLenta: avg(judgedRows, 'marchaLenta'),
+    inercia: avg(judgedRows, 'inercia'),
+    excessoVelocidade: avg(judgedRows, 'excessoVelocidade'),
+    freadasBruscas: avg(judgedRows, 'freadasBruscas'),
+    inactiveCount,
+    noMetaCount: judgedRows.length - validMetaRows.length
   };
 }
 
@@ -365,7 +399,7 @@ export function computeOpportunities(summary) {
       impactoReais: summary.idleSavingsCost15 > 0 ? summary.idleSavingsCost15 : summary.idleCost,
       impactoLitros: summary.idleSavingsLiters15 > 0 ? summary.idleSavingsLiters15 : summary.idleLiters,
       afetados: summary.idleAboveTargetCount,
-      acaoRecomendada: `Reduzir marcha lenta para até ${summary.idleSavingsTargetPercent}% nos equipamentos acima do alvo.`,
+      acaoRecomendada: `Reduzir marcha lenta para até ${summary.idleSavingsTargetPercent}% nos equipamentos acima do alvo (estimativa aproximada de litros).`,
       tone: 'warning'
     });
   }

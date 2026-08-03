@@ -1,5 +1,5 @@
 import { CONFIG, state } from './config.js';
-import { computeOpportunities, generateAlerts, summarizeDrivers } from './calculations.js';
+import { computeOpportunities, generateAlerts, summarizeDrivers, hasMinActivity } from './calculations.js';
 
 /**
  * AI layer: talks to the Cloudflare Pages Functions (/api/insights, /api/chat)
@@ -28,7 +28,8 @@ export function buildAIContext(month, rows, summary) {
       severity: d.severity
     }));
 
-  const topEquipment = [...rows]
+  const topEquipment = rows
+    .filter(hasMinActivity) // exclui equipamento parado/sem dado — não é "pior desempenho" real
     .sort((a, b) => a.score - b.score)
     .slice(0, 10)
     .map(r => ({
@@ -37,7 +38,8 @@ export function buildAIContext(month, rows, summary) {
       consumo: round(r.consumo, 2),
       meta: round(r.meta, 2),
       score: round(r.score),
-      grade: r.grade
+      grade: r.grade,
+      temMeta: r.temMeta
     }));
 
   return {
@@ -114,7 +116,7 @@ function reduceSummary(summary) {
   const {
     frota, consumoMedio, metaMedia, metaHitPct, scoreMedio, grade,
     supportUsageMedio, marchaLenta, inercia, excessoVelocidade,
-    fuelCost, wasteCost, idleCost, savedCost, idleSavingsCost15,
+    fuelCost, wasteCost, idleCost, savedCost, netSavingsCost, idleSavingsCost15,
     idleSavingsTargetPercent, criticalCount, criticalPct, dieselPrice
   } = summary;
 
@@ -124,7 +126,7 @@ function reduceSummary(summary) {
     supportUsageMedio: round(supportUsageMedio), marchaLenta: round(marchaLenta),
     inercia: round(inercia), excessoVelocidade: round(excessoVelocidade),
     fuelCost: round(fuelCost), wasteCost: round(wasteCost), idleCost: round(idleCost),
-    savedCost: round(savedCost), idleSavingsCost15: round(idleSavingsCost15),
+    savedCost: round(savedCost), netSavingsCost: round(netSavingsCost), idleSavingsCost15: round(idleSavingsCost15),
     idleSavingsTargetPercent, criticalCount, criticalPct: round(criticalPct), dieselPrice
   };
 }
